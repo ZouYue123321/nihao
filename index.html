@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>奏乐 · AI 产品经理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- 像素网格背景 -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- 顶部导航 -->
+  <header class="navbar">
+    <a class="logo" href="#home">
+      <span class="logo-pixel">◆</span>AI·PM
+    </a>
+    <nav class="nav-links">
+      <a href="#about" class="nav-item">关于我</a>
+      <a href="#skills" class="nav-item">技能</a>
+      <a href="#projects" class="nav-item">项目</a>
+      <a href="#contact" class="nav-item">联系</a>
+    </nav>
+  </header>
+
+  <!-- 首屏 Hero -->
+  <section id="home" class="hero">
+    <div class="hero-inner">
+      <div class="avatar" aria-hidden="true"></div>
+      <p class="hero-greet">> HELLO WORLD_</p>
+      <h1 class="hero-name">奏 乐</h1>
+      <p class="hero-role">AI 产品经理</p>
+      <p class="hero-slogan"><span id="typewriter"></span><span class="cursor">▌</span></p>
+      <div class="hero-actions">
+        <a href="#projects" class="pixel-btn pixel-btn--primary">查看项目</a>
+        <a href="#contact" class="pixel-btn">联系我</a>
+      </div>
+    </div>
+    <div class="scroll-hint">▼ 向下滚动</div>
+  </section>
+
+  <!-- 关于我 -->
+  <section id="about" class="section">
+    <h2 class="section-title">[ 关于我 ]</h2>
+    <div class="about-card">
+      <p>
+        你好！我是<strong>奏乐</strong>，一名专注于<strong>大模型应用</strong>落地的 AI 产品经理。
+      </p>
+      <p>
+        我擅长把「模糊的想法」变成「可上线的产品」：从需求洞察、Prompt 设计，
+        到数据评估与迭代优化。我相信，好的 AI 产品不是炫技，而是真正帮用户解决问题。
+      </p>
+      <p>
+        工作之余，我喜欢研究各类 AI 工具，也会在这里记录我的思考与项目。
+      </p>
+      <div class="stat-row">
+        <div class="stat"><span class="stat-num">3+</span><span class="stat-label">年经验</span></div>
+        <div class="stat"><span class="stat-num">10+</span><span class="stat-label">上线产品</span></div>
+        <div class="stat"><span class="stat-label">∞</span><span class="stat-label">好奇心</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 技能 -->
+  <section id="skills" class="section">
+    <h2 class="section-title">[ 技能 ]</h2>
+    <div class="skills-grid">
+      <span class="skill-tag skill-tag--pink">Prompt 工程</span>
+      <span class="skill-tag skill-tag--cyan">需求分析</span>
+      <span class="skill-tag skill-tag--yellow">产品规划</span>
+      <span class="skill-tag skill-tag--purple">大模型应用</span>
+      <span class="skill-tag skill-tag--orange">数据分析</span>
+      <span class="skill-tag skill-tag--green">原型设计</span>
+      <span class="skill-tag skill-tag--pink">RAG 检索</span>
+      <span class="skill-tag skill-tag--cyan">Agent 智能体</span>
+      <span class="skill-tag skill-tag--yellow">用户研究</span>
+      <span class="skill-tag skill-tag--purple">项目管理</span>
+    </div>
+  </section>
+
+  <!-- 项目 -->
+  <section id="projects" class="section">
+    <h2 class="section-title">[ 项目作品 ]</h2>
+    <div class="projects-grid">
+      <article class="project-card">
+        <div class="project-icon">🤖</div>
+        <h3>智能客服助手</h3>
+        <p>基于大模型的客服机器人，减少 70% 人工重复咨询。</p>
+        <div class="project-tags">
+          <span>LLM</span><span>RAG</span><span>Agent</span>
+        </div>
+      </article>
+      <article class="project-card">
+        <div class="project-icon">📝</div>
+        <h3>AI 写作工具</h3>
+        <p>面向运营的文案生成工具，支持多场景一键成稿。</p>
+        <div class="project-tags">
+          <span>Prompt</span><span>SaaS</span>
+        </div>
+      </article>
+      <article class="project-card">
+        <div class="project-icon">📊</div>
+        <h3>数据洞察看板</h3>
+        <p>自然语言问数，让业务人员也能轻松分析数据。</p>
+        <div class="project-tags">
+          <span>NLP</span><span>BI</span>
+        </div>
+      </article>
+      <article class="project-card">
+        <div class="project-icon">🎨</div>
+        <h3>AI 绘画社区</h3>
+        <p>AIGC 创作分享社区，从 0 到 1 完成产品闭环。</p>
+        <div class="project-tags">
+          <span>AIGC</span><span>社区</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 联系 -->
+  <section id="contact" class="section">
+    <h2 class="section-title">[ 联系我 ]</h2>
+    <div class="contact-card">
+      <p>如果你有 AI 产品相关的想法或合作，欢迎找我聊聊 👋</p>
+      <div class="contact-links">
+        <a class="pixel-btn" href="mailto:zhangsan@example.com">📧 邮箱</a>
+        <a class="pixel-btn" href="#">💬 微信</a>
+        <a class="pixel-btn" href="#">🐙 GitHub</a>
+        <a class="pixel-btn" href="#">📱 即刻</a>
+      </div>
+      <p class="contact-mail">zhangsan@example.com</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 奏乐 · 用像素和 AI 改变世界 ✦</p>
+  </footer>
+
+  <script>
+    window.difyChatbotConfig = {
+      token: 'zAKsJFB3aHwWy9UV',
+      baseUrl: 'https://udify.app',
+      inputs: {
+        // 可在这里定义 Start 节点的输入变量
+        // key 是变量名，例如：
+        // name: "NAME"
+      },
+      systemVariables: {
+        // user_id: '可在此定义用户 ID',
+        // conversation_id: '可在此定义会话 ID，必须是合法的 UUID',
+      },
+      userVariables: {
+        // avatar_url: '可在此定义用户头像地址',
+        // name: '可在此定义用户名',
+      },
+    }
+  </script>
+  <script
+    src="https://udify.app/embed.min.js"
+    id="zAKsJFB3aHwWy9UV"
+    defer>
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

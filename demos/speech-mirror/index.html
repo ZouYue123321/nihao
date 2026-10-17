@@ -1,0 +1,64 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>表达训练镜子 · MelodyZ</title><link rel="icon" href="../../assets/logo/favicon.svg">
+<link rel="stylesheet" href="../_shared/demo.css"><link rel="stylesheet" href="../_shared/tool.css"><script src="../_shared/tool.js"></script>
+</head><body><main class="tw">
+<h1>表达训练镜子</h1>
+<p class="sub">说一段话，AI 在你的浏览器里把它转成文字，再帮你数一数「然后、其实、就是」说了几次。录音不上传，全程本地处理。</p>
+<div class="card"><h3>01 · 录一段 / 传一段</h3>
+<div class="row"><button class="btn pri" id="rec">● 开始录音</button><label class="btn" for="file">上传音频 / 视频</label><input id="file" type="file" accept="audio/*,video/*" hidden><button class="btn" id="sample">用示例文本体验</button></div>
+<p class="hint" id="mic"></p><audio id="player" controls hidden style="width:100%;margin-top:8px"></audio></div>
+<div class="card"><h3>02 · 本地转写</h3><div class="row"><select id="model"><option value="Xenova/whisper-tiny">快速（tiny，约 40MB）</option><option value="Xenova/whisper-base" selected>标准（base，约 80MB）</option></select><span class="hint">首次使用需下载模型，之后浏览器会缓存</span></div>
+<div id="status" class="hint">等待音频…</div><div id="bar" style="height:2px;background:#2a2a28;border-radius:2px;margin-top:10px"><i style="display:block;height:100%;width:0;background:#fafaf8;transition:width .2s"></i></div></div>
+<div class="card" id="res" hidden><h3>03 · 你这一遍</h3><div class="kv" id="stats"></div>
+<p class="hint" style="margin-top:16px">原话（口头禅已高亮）</p><div id="raw" style="line-height:1.9;font-size:15px"></div>
+<p class="hint" style="margin-top:16px">去掉口头禅后</p><div id="clean" style="line-height:1.9;font-size:15px"></div>
+<div class="row" style="margin-top:14px"><button class="btn" id="cp">复制精简版</button><button class="btn pri" id="again">再说一次 ↻</button></div>
+<div id="cmp"></div></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/opencc-js@1.0.5/dist/umd/t2cn.js"></script>
+<script type="module">
+const FILLERS=['然后','其实','就是','那个','嗯','啊','呃'];
+let prev=null,last=null,pipe=null,pipeId='';
+const st=m=>$('#status').textContent=m,bar=p=>$('#bar i').style.width=p+'%';
+const canMic=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.isSecureContext);
+if(!canMic){$('#mic').innerHTML='当前连接还不是 HTTPS，浏览器不允许网页用麦克风。可以先用手机录音 App 录一段，再点「上传音频」。';}
+async function getPipe(){const id=$('#model').value;if(pipe&&pipeId===id)return pipe;
+ const T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1');
+ T.env.allowLocalModels=false;
+ try{const c=new AbortController();setTimeout(()=>c.abort(),3500);await fetch('https://huggingface.co/'+id+'/resolve/main/config.json',{signal:c.signal});}catch(e){T.env.remoteHost='https://hf-mirror.com/';}
+ const files={};st('正在下载模型…');
+ pipe=await T.pipeline('automatic-speech-recognition',id,{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total){files[p.file]=[p.loaded,p.total];let a=0,b=0;for(const k in files){a+=files[k][0];b+=files[k][1]}bar(a/b*100);st('正在下载模型… '+fmtSize(a)+' / '+fmtSize(b));}}});
+ pipeId=id;return pipe;}
+async function decode(blob){const buf=await blob.arrayBuffer();const ac=new (window.AudioContext||window.webkitAudioContext)();const ab=await ac.decodeAudioData(buf);ac.close();
+ const oc=new OfflineAudioContext(1,Math.ceil(ab.duration*16000),16000);const s=oc.createBufferSource();s.buffer=ab;s.connect(oc.destination);s.start();const r=await oc.startRendering();return {data:r.getChannelData(0),dur:ab.duration};}
+async function run(blob){$('#player').src=URL.createObjectURL(blob);$('#player').hidden=false;
+ try{const {data,dur}=await decode(blob);if(dur>120){st('建议 2 分钟以内，太长会很慢。仍在处理…')}
+  const p=await getPipe();bar(100);st('AI 正在听…（较长的音频需要几十秒）');
+  const out=await p(data,{language:'chinese',task:'transcribe',chunk_length_s:30,stride_length_s:5});
+  let text=(out.text||'').trim();try{text=OpenCC.Converter({from:'t',to:'cn'})(text)}catch(e){}
+  st('完成 ✓');show(text,dur);}catch(e){console.error(e);st('出错了：'+(e.message||e)+'。换个格式（如 mp3 / m4a / wav）再试试。')}}
+function analyze(text,dur){const chars=text.replace(/[\s，。！？、,.!?…；;：:"“”]/g,'').length;const counts={};let total=0;
+ FILLERS.forEach(f=>{const n=(text.match(new RegExp(f,'g'))||[]).length;if(n){counts[f]=n;total+=n}});
+ const re=new RegExp('('+FILLERS.join('|')+')','g');
+ const clean=text.replace(re,'').replace(/[，,]\s*[，,]/g,'，').replace(/^[，,\s]+/,'').replace(/\s+/g,' ');
+ return {text,dur,chars,counts,total,rate:dur?Math.round(chars/dur*60):0,clean,html:escH(text).replace(re,'<mark>$1</mark>')};}
+function show(text,dur){if(last)prev=last;last=analyze(text,dur);const a=last;$('#res').hidden=false;
+ const top=Object.entries(a.counts).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([k,v])=>k+'×'+v).join(' ')||'无';
+ $('#stats').innerHTML=[['时长',a.dur?a.dur.toFixed(1)+' 秒':'—'],['字数',a.chars],['语速',a.rate?a.rate+' 字/分':'—'],['口头禅',a.total+' 次'],['最常出现',top]].map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('');
+ $('#raw').innerHTML=a.html||'<span class="hint">（没有识别到文字）</span>';$('#clean').textContent=a.clean;
+ const tip=a.rate>300?'语速偏快，可以稍微停顿一下。':a.rate&&a.rate<160?'语速偏慢，可以更紧凑一些。':a.rate?'语速适中（常见舒服的范围约 180–260 字/分）。':'';
+ $('#cmp').innerHTML=(tip?`<p class="hint">${tip}</p>`:'')+(prev?`<div class="card" style="margin-top:12px"><h3>和上一遍比</h3><div class="kv">${[['口头禅',prev.total,a.total,1],['语速',prev.rate,a.rate,0],['字数',prev.chars,a.chars,0]].map(([k,x,y,lower])=>{const d=y-x,good=lower?d<0:null;return `<div><span>${k}</span><b>${x} → ${y}</b><span style="margin:6px 0 0">${d===0?'持平':(d>0?'+':'')+d}${good===true?' · 进步了':''}</span></div>`}).join('')}</div></div>`:'');
+ $('#res').scrollIntoView({behavior:'smooth',block:'start'});}
+let mr=null,chunks=[];
+$('#rec').onclick=async()=>{if(!canMic){toast('需要 HTTPS 才能录音，先用上传吧');return}
+ if(mr&&mr.state==='recording'){mr.stop();return}
+ try{const s=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];mr=new MediaRecorder(s);mr.ondataavailable=e=>chunks.push(e.data);
+  mr.onstop=()=>{s.getTracks().forEach(t=>t.stop());$('#rec').textContent='● 开始录音';run(new Blob(chunks,{type:mr.mimeType}))};
+  mr.start();$('#rec').textContent='■ 说完了';st('录音中… 说完点「说完了」');}catch(e){toast('麦克风没有授权')}};
+$('#file').onchange=e=>{const f=e.target.files[0];if(f){st('读取 '+f.name+' …');run(f)}e.target.value=''};
+$('#sample').onclick=()=>{st('这是示例文本，没有调用模型');show('嗯，其实我觉得这个产品就是，然后它的核心就是帮你读书，那个，就是在关键的地方会主动提问，然后让你自己想一想。',24)};
+$('#cp').onclick=()=>last&&copy(last.clean);
+$('#again').onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});toast(canMic?'再录一遍，下面会和这一遍对比':'再上传一段，下面会和这一遍对比')};
+</script>
+<script src="../_shared/demo.js" data-name="whisper-web" data-inspired="1" data-repo="https://github.com/xenova/whisper-web"></script>
+</body></html>

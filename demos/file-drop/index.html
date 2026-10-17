@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文件拖进来 · MelodyZ</title><link rel="icon" href="../../assets/logo/favicon.svg">
+<link rel="stylesheet" href="../_shared/demo.css"><link rel="stylesheet" href="../_shared/tool.css"><script src="../_shared/tool.js"></script><script src="../_shared/img.js"></script>
+<style>.md{line-height:1.9;font-size:15px}.md h1,.md h2,.md h3{font-family:var(--serif)}.md a{color:#c9c9c4}.md code{background:#222;padding:1px 5px;border-radius:4px}.fl{display:flex;justify-content:space-between;border-bottom:1px solid #2a2a28;padding:8px 0;font-size:14px}</style>
+</head><body><main class="tw">
+<h1>文件拖进来</h1>
+<p class="sub">拖一个文件进来，它先告诉你这是什么，再给你几个顺手的操作：图片转格式 / 压缩 / 改尺寸，PDF 合并 / 拆页，文本和 Markdown 预览，音视频信息。文件不离开你的电脑。</p>
+<label class="drop" id="drop" for="pick"><b>拖入文件，或点这里选择</b><br>图片 · PDF（可多选合并）· 文本 / Markdown · 音频 / 视频</label><input id="pick" type="file" multiple hidden>
+<div class="card" id="out" hidden style="margin-top:16px"><h3 id="kind"></h3><div id="info"></div><div id="body" style="margin-top:16px"></div></div>
+</main>
+<script>
+const show=(k,info,html='')=>{$('#out').hidden=false;$('#kind').textContent=k;$('#info').innerHTML='<div class="kv">'+info.map(([a,b])=>`<div><span>${a}</span><b>${escH(b)}</b></div>`).join('')+'</div>';$('#body').innerHTML=html;$('#out').scrollIntoView({behavior:'smooth',block:'nearest'})};
+let pdfLib=null;const PL=()=>pdfLib||(pdfLib=new Promise((r,j)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';s.onload=()=>r(PDFLib);s.onerror=()=>j(new Error('pdf-lib 加载失败'));document.head.appendChild(s)}));
+const ext=f=>(f.name.split('.').pop()||'').toLowerCase();
+async function handle(files){files=[...files];if(!files.length)return;const pdfs=files.filter(f=>f.type==='application/pdf'||ext(f)==='pdf');
+ if(pdfs.length>1)return pdfMerge(pdfs);const f=files[0];
+ try{if(f.type.startsWith('image/'))return image(f);if(pdfs.length)return pdf(f);if(f.type.startsWith('audio/')||f.type.startsWith('video/'))return media(f);
+  if(f.type.startsWith('text/')||/^(md|markdown|txt|csv|json|js|ts|py|html|css|log|yml|yaml)$/.test(ext(f)))return text(f);other(f)}catch(e){console.error(e);toast('处理失败：'+e.message)}}
+async function image(f){const img=await loadImg(URL.createObjectURL(f));show('图片 · '+f.name,[['格式',(f.type.split('/')[1]||ext(f)).toUpperCase()],['大小',fmtSize(f.size)],['尺寸',img.naturalWidth+'×'+img.naturalHeight],['建议','转 WebP 通常能小一半']],'<div id="ib"></div>');imgTools($('#ib'),img,f.name,f.size);$('#ib .kv').remove()}
+async function pdf(f){const L=await PL();const doc=await L.PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:true});const n=doc.getPageCount(),p=doc.getPage(0).getSize();
+ show('PDF · '+f.name,[['大小',fmtSize(f.size)],['页数',n+' 页'],['页面尺寸',Math.round(p.width/72*25.4)+'×'+Math.round(p.height/72*25.4)+' mm'],['标题',doc.getTitle()||'—']],
+ `<p class="hint">提取页面（例如 1-3,5）</p><div class="row"><input type="text" id="rg" value="1-${Math.min(n,3)}" style="max-width:220px"><button class="btn pri" id="ex">提取并下载</button><button class="btn" id="sp">每页拆成单独文件</button></div><p class="hint">想合并？一次拖入多个 PDF 即可。</p>`);
+ const base=f.name.replace(/\.pdf$/i,'');
+ const pick=async idx=>{const o=await L.PDFDocument.create();(await o.copyPages(doc,idx)).forEach(pg=>o.addPage(pg));return new Blob([await o.save()],{type:'application/pdf'})};
+ $('#ex').onclick=async()=>{const idx=[];$('#rg').value.split(/[,，]/).forEach(s=>{const[a,b]=s.split('-').map(x=>parseInt(x));if(!a)return;for(let i=a;i<=(b||a);i++)if(i>=1&&i<=n&&!idx.includes(i-1))idx.push(i-1)});if(!idx.length)return toast('页码不对');dl(await pick(idx),base+'-节选.pdf')};
+ $('#sp').onclick=async()=>{if(n>20&&!confirm('会下载 '+n+' 个文件，继续？'))return;for(let i=0;i<n;i++){dl(await pick([i]),base+'-第'+(i+1)+'页.pdf');await new Promise(r=>setTimeout(r,250))}}}
+async function pdfMerge(list){const L=await PL();let files=list.slice();const draw=async()=>{let pages=0;const docs=[];for(const f of files){const d=await L.PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:true});docs.push(d);pages+=d.getPageCount()}
+ show('合并 '+files.length+' 个 PDF',[['文件',files.length+' 个'],['总页数',pages+' 页'],['总大小',fmtSize(files.reduce((a,f)=>a+f.size,0))]],files.map((f,i)=>`<div class="fl"><span>${i+1}. ${escH(f.name)} · ${docs[i].getPageCount()} 页</span><span><button class="btn" data-u="${i}" style="margin:0;padding:4px 10px">↑</button></span></div>`).join('')+'<div class="row" style="margin-top:14px"><button class="btn pri" id="mg">按这个顺序合并并下载</button></div>');
+ document.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const i=+b.dataset.u;if(i){[files[i-1],files[i]]=[files[i],files[i-1]];draw()}});
+ $('#mg').onclick=async()=>{const o=await L.PDFDocument.create();for(const d of docs)(await o.copyPages(d,d.getPageIndices())).forEach(p=>o.addPage(p));dl(new Blob([await o.save()],{type:'application/pdf'}),'合并.pdf')}};draw()}
+function media(f){const v=f.type.startsWith('video/'),el=document.createElement(v?'video':'audio');el.preload='metadata';el.src=URL.createObjectURL(f);
+ el.onloadedmetadata=()=>{const d=el.duration,t=isFinite(d)?Math.floor(d/60)+' 分 '+Math.round(d%60)+' 秒':'未知';const info=[['格式',(f.type.split('/')[1]||ext(f)).toUpperCase()],['大小',fmtSize(f.size)],['时长',t]];if(v)info.push(['分辨率',el.videoWidth+'×'+el.videoHeight]);if(isFinite(d)&&d)info.push(['平均码率',Math.round(f.size*8/d/1000)+' kbps']);
+  show((v?'视频':'音频')+' · '+f.name,info,'<div id="mb"></div><p class="hint">格式转换需要 ffmpeg（几十 MB），演示版暂不加载。'+(v?'可以截取当前画面：':'想看它说了什么？去 <a href="../speech-mirror/index.html">表达训练镜子</a>。')+'</p>'+(v?'<button class="btn" id="shot">截取当前画面为 PNG</button>':''));
+  el.controls=true;el.style.cssText='width:100%;border-radius:10px';$('#mb').appendChild(el);if(v)$('#shot').onclick=()=>{const c=document.createElement('canvas');c.width=el.videoWidth;c.height=el.videoHeight;c.getContext('2d').drawImage(el,0,0);c.toBlob(b=>dl(b,'截图.png'))}};
+ el.onerror=()=>other(f,'浏览器无法解码这个格式')}
+async function text(f){const s=await f.text(),isMd=/^(md|markdown)$/.test(ext(f))||/^#{1,3} /m.test(s);const lines=s.split('\n').length;
+ show((isMd?'Markdown':'文本')+' · '+f.name,[['大小',fmtSize(f.size)],['行数',lines],['字数',s.replace(/\s/g,'').length],['编码','UTF-8（按此读取）']],
+ `<div class="row"><button class="btn pri" id="v1">${isMd?'渲染预览':'原文'}</button><button class="btn" id="v2">源码</button><button class="btn" id="v3">${isMd?'导出 HTML':'复制全文'}</button></div><div id="tv"></div>`);
+ const src=()=>{$('#tv').innerHTML='<pre>'+escH(s)+'</pre>'};let M=null;
+ const rend=async()=>{if(!isMd)return src();if(!M){await new Promise(r=>{const e=document.createElement('script');e.src='https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js';e.onload=r;document.head.appendChild(e)});M=marked}
+  const tmp=document.createElement('div');tmp.innerHTML=M.parse(s);tmp.querySelectorAll('script,iframe,object').forEach(x=>x.remove());tmp.querySelectorAll('*').forEach(x=>[...x.attributes].forEach(a=>/^on/i.test(a.name)&&x.removeAttribute(a.name)));$('#tv').innerHTML='<div class="md">'+tmp.innerHTML+'</div>';return tmp.innerHTML};
+ $('#v1').onclick=rend;$('#v2').onclick=src;$('#v3').onclick=async()=>{if(!isMd)return copy(s);const h=await rend();dl(new Blob(['<!doctype html><meta charset="utf-8">'+h],{type:'text/html'}),f.name.replace(/\.\w+$/,'')+'.html')};rend()}
+function other(f,why){show('文件 · '+f.name,[['类型',f.type||('.'+ext(f))],['大小',fmtSize(f.size)],['修改时间',new Date(f.lastModified).toLocaleString('zh-CN')]],`<p class="hint">${why||'这个类型演示版还不支持处理'}，可以试试图片、PDF、文本或音视频。</p>`)}
+const dr=$('#drop');['dragover','dragenter'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();dr.classList.add('on')}));['dragleave','drop'].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();dr.classList.remove('on')}));
+document.addEventListener('drop',e=>handle(e.dataTransfer.files));$('#pick').onchange=e=>{handle(e.target.files);e.target.value=''};
+</script>
+<script src="../_shared/demo.js" data-name="file-converter" data-license="MIT" data-repo="https://github.com/jadepam/file-converter"></script>
+</body></html>

@@ -15,6 +15,9 @@ window.SITE = {
   hero: {
     eyebrow: "Notes on AI & Product",
     name: "邹悦",
+    // 首屏红色大字（建议用英文小写，太长会挤）；image 为首屏人物插画
+    wordmark: "melodyz",
+    image: "assets/hero-girl.webp",
     lead: "一个被 AI 重新教会学习的人，正在做 AI 产品。",
     meta: [
       { label: "关注", value: "AI Agent · 产品体验" },
@@ -23,7 +26,7 @@ window.SITE = {
     ]
   },
 
-  // 板块顺序 = 下面数组的顺序；visible:false 隐藏；dark:true 黑底，false 白底
+  // 板块顺序 = 下面数组的顺序；visible:false 隐藏；dark:true 深一点的米色底，false 浅米色底
   // type 不要改（决定板块内容来源）；nav 为顶部导航文字
   sections: [
     { type: "about",     visible: true, dark: false, nav: "关于", num: "关于我",   title: "用产品的眼光，看 AI 的变化", subtitle: "" },

@@ -108,7 +108,15 @@ function render(){
  document.title=S.meta.title;
  const vis=S.sections.filter(s=>s.visible&&R[s.type]);
  $('#nav').innerHTML=`<div class="wrap"><a class="logo" href="#top" aria-label="${esc(S.brand.alt)}"><img class="lg-d" data-img="brand.logoOnDark" src="${esc(S.brand.logoOnDark)}" alt="${esc(S.brand.alt)}"><img class="lg-l" data-img="brand.logoOnLight" src="${esc(S.brand.logoOnLight)}" alt=""></a><ul>${vis.map(s=>`<li><a href="#${s.type}">${esc(s.nav)}</a></li>`).join('')}</ul></div>`;
- $('#heroInner').innerHTML=`<div class="wrap">${T('p','hero.eyebrow','eyebrow rv')}${T('h1','hero.name','rv')}<div class="lockup rv"><span class="lk-line"></span><img class="lk-logo" src="${esc(S.brand.logoOnDark)}" alt="${esc(S.brand.alt)}"><span class="lk-line"></span></div>${T('p','hero.lead','lead rv')}<div class="meta rv">${S.hero.meta.map((_,i)=>`<div class="eitem">${T('span','hero.meta.'+i+'.label')}${T('b','hero.meta.'+i+'.value')}${ctl('hero.meta',i)}</div>`).join('')}</div></div>`;
+ if(S.hero){['wordmark','image'].forEach(k=>{if(S.hero[k]==null&&ORIG.hero[k]!=null)S.hero[k]=ORIG.hero[k];});if(S.hero.image==='assets/hero-girl.svg')S.hero.image=ORIG.hero.image;}
+ const H=S.hero,em=esc(S.contact.email),wm=H.wordmark||ORIG.hero.wordmark||'melodyz',girl=H.image||ORIG.hero.image||'assets/hero-girl.webp';
+ const ld=String(H.lead||''),cut=ld.search(/[，,]/);
+ const lead=EDIT?T('h1','hero.lead','hhead'):`<h1 class="hhead">${cut>0?`<span>${esc(ld.slice(0,cut+1))}</span><span class="olive">${esc(ld.slice(cut+1))}</span>`:`<span>${esc(ld)}</span>`}</h1>`;
+ $('#heroInner').innerHTML=`<div class="hcard"><div class="hedge hl"><a href="mailto:${em}">联系我</a></div><div class="hedge hr" aria-hidden="true"><span class="plus">+</span><span>melodyzpm.com</span></div>
+<div class="htop">${T('b','hero.name')}<i></i>${T('span','hero.eyebrow')}</div>${lead}
+<div class="hword" aria-hidden="true">${EDIT?T('span','hero.wordmark'):esc(wm)}</div>
+<img class="hgirl"${EDIT?' data-img="hero.image"':''} src="${esc(girl)}" alt="戴眼镜的女生坐在白色方块上用笔记本电脑写东西的插画">
+<div class="hbot"><div class="meta">${H.meta.map((_,i)=>`<div class="eitem">${T('span','hero.meta.'+i+'.label')}${T('b','hero.meta.'+i+'.value')}${ctl('hero.meta',i)}</div>`).join('')}</div><a class="hgo" href="#writing">看看我在写什么 <span>→</span></a></div></div>`;
  $('#main').innerHTML=vis.map((s,k)=>{const i=S.sections.indexOf(s);return `<section class="blk ${s.dark?'dk':''}" id="${s.type}"><div class="wrap"><div class="head rv"><span class="num">${pad(k+1)} / ${T('span','sections.'+i+'.num')}</span><div>${T('h2','sections.'+i+'.title')}${s.subtitle||EDIT?T('p','sections.'+i+'.subtitle'):''}</div></div>${R[s.type]()}</div></section>`}).join('');
  const c=S.contact;
  $('#foot').innerHTML=`<div class="wrap">${T('p','contact.headline','big rv')}<a class="mail" href="mailto:${esc(c.email)}" data-p="contact.email">${esc(c.email)}</a>${(EDIT||c.copyright||c.credit)?`<div class="bt">${T('span','contact.copyright')}${T('span','contact.credit')}</div>`:''}</div>`;
@@ -116,8 +124,8 @@ function render(){
 }
 let io;function reveal(){io&&io.disconnect();io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});document.querySelectorAll('.rv').forEach(el=>io.observe(el));}
 function navState(){const n=$('#nav');if(!n)return;n.classList.toggle('s',scrollY>40);
- const lk=$('.lockup');const past=!lk||lk.getBoundingClientRect().bottom<70;n.classList.toggle('showlogo',past||EDIT);
- const el=document.elementFromPoint(innerWidth/2,80);const sec=el&&el.closest('section,header,footer');n.classList.toggle('light',!!sec&&sec.tagName==='SECTION'&&!sec.classList.contains('dk'));}
+ n.classList.add('showlogo');
+ n.classList.add('light');}
 addEventListener('scroll',navState,{passive:true});addEventListener('resize',navState);
 
 /* ---------- 阅读器 ---------- */
@@ -127,7 +135,7 @@ async function loadArticle(id){await upReady;if(UP[id]!=null)return UP[id];retur
 let lastScroll=0;
 async function openReader(id){const a=S.articles.find(x=>x.id===id);if(!a)return;
  const r=$('#reader');lastScroll=scrollY;
- r.innerHTML=`<div class="rbar"><img class="rlogo" src="${esc(S.brand.logoOnDark)}" alt="${esc(S.brand.alt)}"><span class="ract">${EDIT?'<button class="rexp">导出本文 .js</button>':''}<button class="rclose" aria-label="关闭">返回 ✕</button></span></div><article class="rbody"><time>${esc(a.date)}</time><h1>${esc(a.title)}</h1>${a.cover?`<img class="rcover" src="${esc(a.cover)}" alt="">`:''}<div class="rtext">加载中…</div><p class="rend">— 完 —</p></article>`;
+ r.innerHTML=`<div class="rbar"><img class="rlogo" src="${esc(S.brand.logoOnLight)}" alt="${esc(S.brand.alt)}"><span class="ract">${EDIT?'<button class="rexp">导出本文 .js</button>':''}<button class="rclose" aria-label="关闭">返回 ✕</button></span></div><article class="rbody"><time>${esc(a.date)}</time><h1>${esc(a.title)}</h1>${a.cover?`<img class="rcover" src="${esc(a.cover)}" alt="">`:''}<div class="rtext">加载中…</div><p class="rend">— 完 —</p></article>`;
  r.classList.add('open');document.body.classList.add('noscroll');r.scrollTop=0;
  const html=await loadArticle(id);const t=$('.rtext',r);t.innerHTML=html;
  if(EDIT){t.contentEditable=true;t.addEventListener('input',()=>{if(UP[id]!=null)putBody(id,t.innerHTML);else{artOverrides[id]=t.innerHTML;localStorage.setItem(LSA,JSON.stringify(artOverrides));}flash();});
@@ -156,7 +164,7 @@ function openNote(i){const n=S.notes[i];if(!n)return;const r=$('#reader');if(!r.
  const paras=String(n.body||'').split(/\n\s*\n/).filter(x=>x.trim()).map(x=>`<p>${esc(x).replace(/\n/g,'<br>')}</p>`).join('');
  const img=n.image?`<img class="rcover"${EDIT?` data-img="${P}.image"`:''} src="${esc(n.image)}" alt="">`:(EDIT&&rev?`<div class="rimg-e" data-img="${P}.image">＋ 配图（可选）</div>`:'');
  const tm=`${esc(n.type)}${!PD(n.period)?' · '+esc(n.period):''}`;
- r.innerHTML=`<div class="rbar"><img class="rlogo" src="${esc(S.brand.logoOnDark)}" alt="${esc(S.brand.alt)}"><span class="ract"><button class="rclose">返回 ✕</button></span></div><article class="rbody rnote"><time>${tm}</time>${T('h1',P+'.name')}${EDIT||!PD(n.tag)?T('p',P+'.tag','rsub'+(PD(n.tag)?' pend':'')):''}${meta}${EDIT||!PD(n.question)?`<div class="rq"><small>我想回答</small>${T('p',P+'.question',PD(n.question)?'pend':'')}</div>`:''}<dl class="nfields">${fields}${rating}${tags}</dl>${img}${paras||EDIT?`<div class="rdiv"><span>全文</span></div><div class="rtext">${paras||(EDIT?'<p>（在这里写全文，空一行分段）</p>':'')}</div>`:''}${n.link&&!EDIT?`<p class="rlink"><a href="${esc(n.link)}" target="_blank" rel="noopener">官网 ↗</a></p>`:''}<p class="rend">— 完 —</p></article>`;
+ r.innerHTML=`<div class="rbar"><img class="rlogo" src="${esc(S.brand.logoOnLight)}" alt="${esc(S.brand.alt)}"><span class="ract"><button class="rclose">返回 ✕</button></span></div><article class="rbody rnote"><time>${tm}</time>${T('h1',P+'.name')}${EDIT||!PD(n.tag)?T('p',P+'.tag','rsub'+(PD(n.tag)?' pend':'')):''}${meta}${EDIT||!PD(n.question)?`<div class="rq"><small>我想回答</small>${T('p',P+'.question',PD(n.question)?'pend':'')}</div>`:''}<dl class="nfields">${fields}${rating}${tags}</dl>${img}${paras||EDIT?`<div class="rdiv"><span>全文</span></div><div class="rtext">${paras||(EDIT?'<p>（在这里写全文，空一行分段）</p>':'')}</div>`:''}${n.link&&!EDIT?`<p class="rlink"><a href="${esc(n.link)}" target="_blank" rel="noopener">官网 ↗</a></p>`:''}<p class="rend">— 完 —</p></article>`;
  r.classList.add('open');document.body.classList.add('noscroll');r.scrollTop=0;
  if(EDIT){bindEdit(r);const t=$('.rtext',r);t.contentEditable=true;t.addEventListener('input',()=>{n.body=t.innerText.replace(/\n{3,}/g,'\n\n').trim();save();});
   const tg=$('[data-tags]',r);tg&&tg.addEventListener('input',()=>{n.tags=tg.innerText.split(/[,，、\n]/).map(x=>x.trim()).filter(Boolean);save();});
@@ -172,7 +180,7 @@ function articleJS(id,html){return '/* 文章正文，可直接修改 HTML。注
 function armEdit(){
  document.body.classList.add('editing');
  bindEdit(document);
- document.querySelectorAll('#main [data-img],#nav [data-img]').forEach(el=>{el.classList.add('eimg');el.title='点击更换图片';el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();pickImage(el.dataset.img);});});
+ document.querySelectorAll('#main [data-img],#nav [data-img],#heroInner [data-img]').forEach(el=>{el.classList.add('eimg');el.title='点击更换图片';el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();pickImage(el.dataset.img);});});
 }
 function bindEdit(root){
  root.querySelectorAll('[data-p]').forEach(el=>{if(el.dataset.eb)return;el.dataset.eb=1;el.contentEditable=true;el.spellcheck=false;
@@ -198,7 +206,7 @@ function editBar(){const bar=document.createElement('div');bar.id='ebar';
   if(a==='reset'&&confirm('放弃所有未导出的修改（包括上传的文章），恢复为 content.js 的内容？')){localStorage.removeItem(LS);localStorage.removeItem(LSA);localStorage.removeItem(LSB);clearBodies().finally(()=>location.reload());}
   if(a==='sec')secPanel();});}
 function secPanel(){let p=$('#epanel');if(p){p.remove();return;}p=document.createElement('div');p.id='epanel';
- const draw=()=>{p.innerHTML='<h4>板块顺序与显示</h4>'+S.sections.map((s,i)=>`<div class="erow"><span>${esc(s.num)}</span><label><input type="checkbox" data-k="visible" data-i="${i}" ${s.visible?'checked':''}>显示</label><label><input type="checkbox" data-k="dark" data-i="${i}" ${s.dark?'checked':''}>黑底</label><button data-m="-1" data-i="${i}">↑</button><button data-m="1" data-i="${i}">↓</button></div>`).join('');};
+ const draw=()=>{p.innerHTML='<h4>板块顺序与显示</h4>'+S.sections.map((s,i)=>`<div class="erow"><span>${esc(s.num)}</span><label><input type="checkbox" data-k="visible" data-i="${i}" ${s.visible?'checked':''}>显示</label><label><input type="checkbox" data-k="dark" data-i="${i}" ${s.dark?'checked':''}>深色底</label><button data-m="-1" data-i="${i}">↑</button><button data-m="1" data-i="${i}">↓</button></div>`).join('');};
  draw();document.body.appendChild(p);
  p.addEventListener('change',e=>{const s=S.sections[e.target.dataset.i];s[e.target.dataset.k]=e.target.checked;save();render();});
  p.addEventListener('click',e=>{const m=+e.target.dataset.m;if(!m)return;const i=+e.target.dataset.i,j=i+m;if(j<0||j>=S.sections.length)return;[S.sections[i],S.sections[j]]=[S.sections[j],S.sections[i]];save();render();draw();});}

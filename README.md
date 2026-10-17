@@ -90,3 +90,9 @@
 - `demos/t-rex/` 小恐龙快跑（t-rex-runner，BSD-3-Clause）
 每个文件夹里保留了原项目的 LICENSE，页面底部有致谢。顶栏和致谢样式在 `demos/_shared/`。
 小实验现在只放这 5 个在线 demo（小汤、戳泡泡 · 点一下、手机桌宠三张卡片和「AI 工作流」板块已按你的要求删除）。小实验卡片在 content.js 的 experiments 里，`link` 是点击打开的页面，`tag` 是小标签，封面在 `assets/demos/`。
+
+## 配色与字体（2026.10 米白 + 红色版）
+- 主色红 `#E5322D`（深一点 `#C42620`），背景米白 `#EEE8E0` / 卡片 `#F7F3EE`、`#FFFDFA`，正文 `#1B1A17`，次要橄榄色 `#6A6A4C`。改颜色只需改 `assets/style.css` 顶部的 `:root`。
+- 首屏红色大字 = content.js 里的 `hero.wordmark`；人物插画 = `hero.image`（默认 `assets/hero-girl.svg`）。
+- 英文字体 Instrument Sans 放在 `assets/fonts/`（自托管，国内可用），中文用系统字体。
+- 旧版黑色主题备份在 `/workspace/zouyue-site-backup-black-20261018`。

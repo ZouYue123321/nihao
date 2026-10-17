@@ -8,12 +8,13 @@
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="../_shared/demo.css">
     <style>
-    html,body{background:#0b0b0b}
-    .runner-canvas,.icon-offline{filter:invert(1)}
-    .offline .interstitial-wrapper{color:#fafaf8;padding-top:150px}
-    #messageBox{position:fixed;left:0;right:0;top:96px;text-align:center;font-family:var(--sans);color:#fafaf8;z-index:5;pointer-events:none}
-    #messageBox h1{font:600 clamp(26px,4.4vw,40px)/1.3 var(--serif);letter-spacing:.08em;margin:0}
-    #messageBox p{color:#8a8a85;font-size:13px;letter-spacing:.08em;margin:8px 0 0}
+    html,body{background:var(--bg)}
+    .runner-canvas{mix-blend-mode:multiply}
+    .offline .interstitial-wrapper{color:var(--ink);padding-top:150px}
+    #messageBox{position:fixed;left:0;right:0;top:96px;text-align:center;font-family:var(--sans);color:var(--ink);z-index:5;pointer-events:none}
+    #messageBox h1{font:700 clamp(28px,4.6vw,44px)/1.25 var(--sans);letter-spacing:-.01em;margin:0}
+    #messageBox h1:after{content:"";display:block;width:36px;height:4px;border-radius:2px;background:var(--red);margin:14px auto 0}
+    #messageBox p{color:var(--mute);font-size:13.5px;margin:12px 0 0}
     </style>
     <script src="index.js"></script>
 </head>

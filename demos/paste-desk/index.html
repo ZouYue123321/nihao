@@ -27,7 +27,7 @@ function url(s){let u;try{u=new URL(s)}catch(e){return text(s)}
  const qr=qrcode(0,'M');qr.addData(clean);qr.make();
  show('链接',`<div class="kv"><div><span>域名</span><b>${escH(u.hostname)}</b></div><div><span>参数</span><b>${[...u.searchParams].length} 个</b></div><div><span>去掉跟踪参数</span><b>${[...u.searchParams].length-[...c.searchParams].length} 个</b></div></div>
  <p class="hint" style="margin-top:14px">干净链接</p><pre>${escH(clean)}</pre>
- <div style="background:#fafaf8;display:inline-block;padding:10px;border-radius:10px;margin-top:14px">${qr.createSvgTag(4,0)}</div>
+ <div style="background:#fff;border:1px solid var(--line);display:inline-block;padding:10px;border-radius:10px;margin-top:14px">${qr.createSvgTag(4,0)}</div>
  ${btns([['复制干净链接','a1',1],['复制 Markdown 链接','a2'],['下载二维码','a3'],['打开','a4']])}`);
  $('#a1').onclick=()=>copy(clean);$('#a2').onclick=()=>copy(`[${u.hostname}](${clean})`);$('#a4').onclick=()=>open(clean,'_blank');
  $('#a3').onclick=()=>dl(new Blob([qr.createSvgTag(8,4)],{type:'image/svg+xml'}),'qrcode.svg');}

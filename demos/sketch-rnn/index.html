@@ -1,0 +1,66 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AI 陪你画画 · MelodyZ</title><link rel="icon" href="../../assets/logo/favicon.svg"><link rel="stylesheet" href="../_shared/demo.css">
+<style>
+html,body{margin:0;height:100%;background:#0b0b0b;color:#fafaf8;font-family:var(--sans);overflow:hidden;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;cursor:crosshair}
+.intro{position:fixed;top:64px;left:0;right:0;text-align:center;pointer-events:none}
+.intro h1{font:600 clamp(26px,4vw,40px)/1.3 var(--serif);letter-spacing:.08em;margin:0}
+.intro p{color:#8a8a85;font-size:13px;letter-spacing:.08em;margin:8px 0 0}
+.ctl{position:fixed;left:50%;transform:translateX(-50%);bottom:40px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:5;width:calc(100% - 32px)}
+.ctl button{background:transparent;color:#fafaf8;border:1px solid #fafaf844;border-radius:999px;padding:7px 15px;font:13px var(--sans);letter-spacing:.08em;cursor:pointer}
+.ctl button.on,.ctl button:hover{background:#fafaf8;color:#0b0b0b}
+.ctl .sep{width:1px;background:#fafaf833;margin:0 4px}
+#st{position:fixed;left:0;right:0;bottom:84px;text-align:center;color:#8a8a85;font-size:12px;letter-spacing:.1em;pointer-events:none}
+</style></head><body>
+<canvas id="c"></canvas>
+<div class="intro"><h1>AI 陪你画画</h1><p>先画几笔开头，松手后 AI 接着帮你画完</p></div>
+<div id="st">正在加载模型…</div>
+<div class="ctl" id="ctl"></div>
+<script src="lib/numjs.js"></script><script src="lib/sketch_rnn.js"></script>
+<script>
+(function(){
+var MODELS=[['cat','小猫'],['flower','花'],['bird','小鸟'],['butterfly','蝴蝶']];
+var cv=document.getElementById('c'),ctx=cv.getContext('2d'),st=document.getElementById('st'),ctl=document.getElementById('ctl');
+var dpr=Math.min(devicePixelRatio||1,2),W,H,cache={},model=null,cur='cat';
+var strokes=[],lastX,lastY,drawing=false,state,pen,ax,ay,anim=null,temp=0.25,SCALE=3.0;
+function resize(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);clearAll();}
+function clearAll(){ctx.fillStyle='#0b0b0b';ctx.fillRect(0,0,W,H);strokes=[];stop();}
+function stop(){if(anim){cancelAnimationFrame(anim);anim=null;}}
+function line(x1,y1,x2,y2,c,w){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function load(name){st.textContent='正在加载模型…';
+ if(cache[name]){use(name);return;}
+ fetch('models/'+name+'.gen.json').then(function(r){if(!r.ok)throw r.status;return r.text()}).then(function(t){cache[name]=JSON.parse(t);use(name)}).catch(function(e){st.textContent='模型加载失败，请刷新重试';console.warn(e)});}
+function use(name){cur=name;model=new SketchRNN(cache[name]);model.set_pixel_factor(SCALE);render();
+ st.textContent='现在画的是：'+MODELS.find(function(m){return m[0]===name})[1]+' · 在空白处画几笔试试';
+ if(strokes.length)predict();}
+function render(){ctl.innerHTML=MODELS.map(function(m){return '<button data-m="'+m[0]+'" class="'+(m[0]===cur?'on':'')+'">'+m[1]+'</button>'}).join('')+'<span class="sep"></span><button data-a="again">换个结尾</button><button data-a="clear">清空</button>';}
+ctl.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+ if(b.dataset.m){clearAll();load(b.dataset.m);}else if(b.dataset.a==='clear'){clearAll();st.textContent='画布已清空';}else if(b.dataset.a==='again'){redrawUser();predict();}});
+function redrawUser(){ctx.fillStyle='#0b0b0b';ctx.fillRect(0,0,W,H);var x=strokes.sx,y=strokes.sy;if(x==null)return;
+ for(var i=0;i<strokes.length;i++){var s=strokes[i];if(i===0||strokes[i-1][2]===1)line(x,y,x+s[0],y+s[1],'#fafaf8',3);x+=s[0];y+=s[1];}}
+function pos(e){return[e.clientX,e.clientY]}
+cv.addEventListener('pointerdown',function(e){if(!model)return;stop();var p=pos(e);
+ if(!strokes.length){redrawUser();strokes.sx=p[0];strokes.sy=p[1];}else{redrawUser();strokes.push([p[0]-lastX,p[1]-lastY,1,0,0]);}
+ lastX=p[0];lastY=p[1];drawing=true;cv.setPointerCapture(e.pointerId);});
+cv.addEventListener('pointermove',function(e){if(!drawing)return;var p=pos(e),dx=p[0]-lastX,dy=p[1]-lastY;
+ if(dx*dx+dy*dy<36)return;line(lastX,lastY,p[0],p[1],'#fafaf8',3);strokes.push([dx,dy,1,0,0]);lastX=p[0];lastY=p[1];});
+function up(){if(!drawing)return;drawing=false;if(strokes.length){strokes[strokes.length-1][2]=0;strokes[strokes.length-1][3]=1;}
+ // 把落笔/抬笔改成 sketch-rnn 的 stroke-5 习惯：每一段的最后一点抬笔
+ if(strokes.length>2)predict();}
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+function predict(){stop();if(!model||strokes.length<2)return;
+ // 修正：stroke-5 中 pen 状态描述“画完这一点后”的状态
+ var seq=strokes.map(function(s){return s.slice()});
+ state=model.zero_state();state=model.update(model.zero_input(),state);
+ for(var i=0;i<seq.length;i++)state=model.update(seq[i],state);
+ ax=lastX;ay=lastY;pen=seq[seq.length-1].slice(2,5);var n=0;st.textContent='AI 正在接着画…';
+ (function step(){for(var k=0;k<2;k++){var pdf=model.get_pdf(state),o=model.sample(pdf,temp);
+  if(o[4]===1||n++>400){anim=null;st.textContent='画完了 · 可以继续画，或点「换个结尾」';return;}
+  if(pen[0]===1)line(ax,ay,ax+o[0],ay+o[1],'#e9b8bf',2.4);
+  pen=[o[2],o[3],o[4]];state=model.update(o,state);ax+=o[0];ay+=o[1];}
+  anim=requestAnimationFrame(step);})();}
+addEventListener('resize',resize);resize();render();load('cat');
+})();
+</script>
+<script src="../_shared/demo.js" data-name="Magenta Sketch-RNN" data-license="Apache-2.0" data-repo="https://github.com/magenta/magenta-demos/tree/main/sketch-rnn-js"></script>
+</body></html>

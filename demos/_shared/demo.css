@@ -1,0 +1,8 @@
+:root{--ink:#0b0b0b;--paper:#fafaf8;--mute:#8a8a85;--line:#2a2a28;--serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong",serif;--sans:-apple-system,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif}
+.mz-bar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-family:var(--sans);pointer-events:none;background:linear-gradient(#0b0b0bcc,#0b0b0b00)}
+.mz-bar a{pointer-events:auto;color:#fafaf8;text-decoration:none;font-size:13px;letter-spacing:.12em;display:flex;align-items:center;gap:8px}
+.mz-bar img{height:22px;display:block}
+.mz-bar .back{border:1px solid #fafaf855;padding:5px 14px;border-radius:999px;transition:.2s}
+.mz-bar .back:hover{background:#fafaf8;color:#0b0b0b}
+.mz-credit{position:fixed;left:0;right:0;bottom:0;z-index:1000;text-align:center;padding:8px 12px;font:11px/1.6 var(--sans);letter-spacing:.06em;color:#8a8a85;pointer-events:none}
+.mz-credit a{color:#c9c9c4;pointer-events:auto;text-decoration:underline;text-underline-offset:3px}

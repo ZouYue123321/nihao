@@ -182,5 +182,5 @@ window.SITE = {
   ],
 
   // 页脚联系
-  contact: { headline: "纸上得来终觉浅，\n绝知此事要躬行。", email: "1289638876@qq.com", copyright: "© 2026 邹悦", credit: "Made with Cursor & Grok Bot" }
+  contact: { headline: "纸上得来终觉浅，\n绝知此事要躬行。", email: "1289638876@qq.com", copyright: "", credit: "" }
 };

@@ -158,15 +158,12 @@ window.SITE = {
   // tag 为小标签（如 AI 互动 / 小游戏），link 为点击后打开的页面（站内 demos/ 下的小游戏）
   // wip:true 为空心圆点（进行中），false 为实心（已完成）
   experiments: [
+    { title: "引导式阅读", status: "在线可玩", wip: false, tag: "AI 阅读", link: "demos/guided-reading/index.html", image: "assets/demos/guided-reading.jpg", art: "",
+      desc: "读朱自清《背影》，AI 引导员在 6 个关键处主动出现：先引用原文，再提一个问题。可以划线、写笔记，读完生成阶段复盘。",
+      points: [ { k: "演示", v: "引导内容为预先写好，不调用 AI；思路来自我正在做的引导式阅读 App" } ] },
     { title: "表达训练镜子", status: "在线可玩", wip: false, tag: "AI 互动", link: "demos/speech-mirror/index.html", image: "assets/demos/speech-mirror.jpg", art: "",
       desc: "说一段话或上传录音，AI 在浏览器里转成文字，数出「然后、其实、就是」各说了几次，再说一遍还能和上次对比。",
       points: [ { k: "原理", v: "Whisper 语音识别模型通过 Transformers.js 在本地运行，录音不上传" } ] },
-    { title: "万能粘贴台", status: "在线可玩", wip: false, tag: "小工具", link: "demos/paste-desk/index.html", image: "assets/demos/paste-desk.jpg", art: "",
-      desc: "随手粘贴图片、链接、JSON、代码或一段长文字，它自动认出是什么，给出压缩、二维码、转表格、提取待办等操作。",
-      points: [] },
-    { title: "文件拖进来", status: "在线可玩", wip: false, tag: "小工具", link: "demos/file-drop/index.html", image: "assets/demos/file-drop.jpg", art: "",
-      desc: "拖入一个文件，先告诉你它是什么，再顺手处理：图片转格式和压缩，PDF 合并、拆页，Markdown 预览。",
-      points: [] },
     { title: "叠楼", status: "在线可玩", wip: false, tag: "小游戏", link: "demos/tower-game/index.html", image: "assets/demos/tower-game.jpg", art: "",
       desc: "点一下放下一层楼，叠得越稳越高分。手机上玩手感最好。",
       points: [] },

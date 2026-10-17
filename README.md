@@ -83,16 +83,15 @@
 左上角 Logo 在 content.js 的 `brand` 里设置。MelodyZ 字标用开源字体 Instrument Serif（SIL OFL 协议，可商用）转成了矢量图形，不依赖本机字体。
 
 ## 小实验里的在线 demo（demos/）
-- `demos/sketch-rnn/` AI 陪你画画（Magenta Sketch-RNN，Apache-2.0，模型在 models/ 里，每个约 3MB）
-- `demos/face-api/` AI 读心镜（face-api，MIT，画面只在本机处理）
-- `demos/flappy-learning/` AI 学飞（FlappyLearning，MIT）
+- `demos/guided-reading/` 引导式阅读（基于 Kruthi 的「先引用原文」思路改编，MIT；引导内容是预先写好的，不调用 AI）
+- `demos/speech-mirror/` 表达训练镜子（灵感来自 whisper-web，独立实现）
 - `demos/tower-game/` 叠楼（tower_game，MIT）
 - `demos/t-rex/` 小恐龙快跑（t-rex-runner，BSD-3-Clause）
 每个文件夹里保留了原项目的 LICENSE，页面底部有致谢。顶栏和致谢样式在 `demos/_shared/`。
-小实验现在只放这 5 个在线 demo（小汤、戳泡泡 · 点一下、手机桌宠三张卡片和「AI 工作流」板块已按你的要求删除）。小实验卡片在 content.js 的 experiments 里，`link` 是点击打开的页面，`tag` 是小标签，封面在 `assets/demos/`。
+小实验现在放这 4 个在线 demo。点卡片会在当前页面放大打开（iframe），点「缩小」、背景或按 Esc 收回，不会跳转刷新；demo 被嵌入时自动隐藏自己的顶栏。小实验卡片在 content.js 的 experiments 里，`link` 是点击打开的页面，`tag` 是小标签，封面在 `assets/demos/`。
 
 ## 配色与字体（2026.10 米白 + 红色版）
 - 主色红 `#E5322D`（深一点 `#C42620`），背景米白 `#EEE8E0` / 卡片 `#F7F3EE`、`#FFFDFA`，正文 `#1B1A17`，次要橄榄色 `#6A6A4C`。改颜色只需改 `assets/style.css` 顶部的 `:root`。
-- 首屏红色大字 = content.js 里的 `hero.wordmark`；人物插画 = `hero.image`（默认 `assets/hero-girl.svg`）。
+- 首屏红色大字 = content.js 里的 `hero.wordmark`；人物插画 = `hero.image`（默认 `assets/hero-girl.webp`，AI 生成后抠图）。
 - 英文字体 Instrument Sans 放在 `assets/fonts/`（自托管，国内可用），中文用系统字体。
 - 旧版黑色主题备份在 `/workspace/zouyue-site-backup-black-20261018`。

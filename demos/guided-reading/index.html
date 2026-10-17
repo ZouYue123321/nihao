@@ -1,0 +1,219 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>引导式阅读 · MelodyZ</title><link rel="icon" href="../../assets/logo/favicon.svg">
+<link rel="stylesheet" href="../_shared/demo.css"><link rel="stylesheet" href="../_shared/tool.css">
+<style>
+:root{--rd:"Songti SC","STSong","Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC",serif;--top:62px}
+html.mz-embed{--top:0px}
+.tw{max-width:720px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 11.5px/1 var(--sans);letter-spacing:.08em;color:var(--red);background:var(--red-soft);padding:7px 11px;border-radius:999px;margin:0 0 16px}
+.chip i{width:6px;height:6px;border-radius:50%;background:var(--red)}
+.book{display:flex;gap:18px;align-items:center}
+.cover{flex:none;width:86px;height:118px;border-radius:6px 12px 12px 6px;background:var(--red);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:12px 10px;box-shadow:inset 6px 0 0 rgba(0,0,0,.12),0 16px 30px -18px rgba(150,30,20,.7)}
+.cover b{font:700 22px/1.1 var(--rd);writing-mode:vertical-rl;letter-spacing:.2em}.cover small{font-size:10px;opacity:.85}
+.book h2{margin:0 0 6px;font:700 22px/1.3 var(--sans)}.book p{margin:0;color:var(--mute);font-size:13.5px;line-height:1.8}
+.goals{display:grid;gap:10px}
+.goal{display:flex;gap:14px;align-items:flex-start;text-align:left;width:100%;border:1.5px solid var(--line);background:var(--cream);border-radius:16px;padding:14px 16px;cursor:pointer;font:inherit;color:inherit;transition:.2s}
+.goal:hover{border-color:var(--red)}.goal.on{border-color:var(--red);background:var(--red-soft)}
+.goal .n{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font:600 12px/1 var(--sans);color:var(--mute);background:var(--card)}
+.goal.on .n{background:var(--red);border-color:var(--red);color:#fff}
+.goal b{display:block;font-size:15px;margin-bottom:3px}.goal span{color:var(--mute);font-size:13px;line-height:1.6}
+.route{list-style:none;margin:0;padding:0;position:relative}
+.route li{position:relative;padding:0 0 14px 30px;font-size:14px;line-height:1.6}
+.route li:before{content:"";position:absolute;left:7px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--card);border:2px solid var(--red)}
+.route li:not(:last-child):after{content:"";position:absolute;left:12px;top:19px;bottom:-1px;width:1.5px;background:var(--line)}
+.route li small{display:block;color:var(--mute);font-size:12.5px}
+.hide{display:none!important}
+/* reading */
+.pbar{position:sticky;top:0;z-index:20;background:rgba(238,232,224,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin:0 -20px 18px;padding:calc(var(--top) + 12px) 20px 10px}
+.pbar .t{display:flex;justify-content:space-between;gap:10px;font:500 12.5px/1 var(--sans);color:var(--mute);margin-bottom:9px}.pbar .t b{color:var(--ink)}
+.pbar .tr{height:4px;border-radius:2px;background:var(--line);overflow:hidden}.pbar .tr i{display:block;height:100%;width:0;background:var(--red);transition:width .5s}
+.paper{background:var(--card);border-radius:22px;padding:34px 38px 26px;box-shadow:0 24px 50px -36px rgba(60,40,20,.35),0 1px 3px rgba(60,40,20,.05)}
+.paper h2{font:700 26px/1.3 var(--rd);margin:0 0 4px;text-align:center}.paper .au{text-align:center;color:var(--mute);font-size:13px;margin:0 0 26px}
+.pw{animation:fadeUp .6s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.para{font:17px/2.05 var(--rd);text-indent:2em;margin:0 0 6px;text-align:justify;color:#2a2722}
+.para mark{background:none;color:inherit;padding:0}
+.para .hl{background:linear-gradient(transparent 58%,#FBD3CC 58%);cursor:pointer}
+.para .hl.nt{background:linear-gradient(transparent 58%,#F7B8AE 58%)}
+.para .q{background:linear-gradient(transparent 62%,rgba(229,50,45,.18) 62%);box-shadow:0 2px 0 var(--red)}
+.para .q.flash,.para .hl.flash{animation:fl 1.4s}
+@keyframes fl{0%,100%{background-color:transparent}30%{background-color:rgba(229,50,45,.28)}}
+.notes{margin:4px 0 12px 2em}.notes div{font:13px/1.6 var(--sans);color:var(--olive);padding:6px 10px;border-left:2px solid #F7B8AE;background:var(--cream);border-radius:0 8px 8px 0;margin:4px 0}
+.notes div q{color:var(--mute);quotes:"「" "」"}
+.guide{margin:16px 0 22px;border-radius:18px;background:var(--cream);border:1.5px solid var(--red);padding:16px 18px;animation:pop .5s cubic-bezier(.2,.9,.3,1.2) both;font-family:var(--sans)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.guide .gh{display:flex;align-items:center;gap:8px;font:600 12px/1 var(--sans);letter-spacing:.08em;color:var(--red);margin-bottom:12px}
+.guide .gh .av{width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:11px;letter-spacing:0}
+.guide blockquote{margin:0 0 12px;padding:10px 14px;border-left:3px solid var(--red);background:var(--card);border-radius:0 10px 10px 0;font:15px/1.8 var(--rd);cursor:pointer}
+.guide blockquote:after{content:"  ↑ 回到原文";font:500 11px var(--sans);color:var(--mute)}
+.guide .fc{font-size:12.5px;color:var(--olive);margin:0 0 8px;line-height:1.6}
+.guide .gq{font-size:15px;line-height:1.75;margin:0 0 12px;font-weight:600}
+.guide .tip{font-size:14.5px;line-height:1.8;margin:0 0 12px}
+.opts{display:grid;gap:8px;margin-bottom:4px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:11px 14px;font:14px/1.5 var(--sans);color:var(--ink);cursor:pointer;transition:.2s}
+.opt:hover:not(:disabled){border-color:var(--red)}.opt.on{border-color:var(--red);background:var(--red-soft)}.opt:disabled:not(.on){opacity:.45;cursor:default}
+.reply{font-size:14px;line-height:1.85;margin:12px 0 4px;padding:12px 14px;background:var(--card);border-radius:12px;animation:fadeUp .4s both}
+.cite{color:var(--red);cursor:pointer;border-bottom:1px dashed var(--red)}
+.guide textarea{min-height:72px;margin-bottom:8px;background:var(--card)}
+.nextb{margin-top:12px}
+/* selection tool */
+#tool{position:absolute;z-index:50;background:var(--ink);color:#fff;border-radius:12px;padding:5px;display:flex;gap:2px;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);font-family:var(--sans)}
+#tool button{appearance:none;border:0;background:none;color:#fff;font:600 13px/1 var(--sans);padding:9px 12px;border-radius:8px;cursor:pointer}#tool button:hover{background:rgba(255,255,255,.14)}
+#tool .ed{display:flex;flex-direction:column;gap:6px;padding:4px;width:240px}#tool textarea{background:#fff;min-height:64px;font-size:13px;padding:8px}
+#tool .row2{display:flex;justify-content:flex-end;gap:4px}#tool .save{background:var(--red)}
+.hint2{font-size:12.5px;color:var(--mute);text-align:center;margin:10px 0 0}
+/* recap */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+.stats div{background:var(--cream);border-radius:14px;padding:14px 12px}.stats b{display:block;font:700 26px/1 var(--sans);color:var(--red);margin-bottom:6px}.stats span{font-size:12px;color:var(--mute)}
+.rc{border-top:1px solid var(--line);padding:14px 0}.rc:first-of-type{border-top:0;padding-top:0}
+.rc .qq{font:14.5px/1.8 var(--rd);color:var(--ink);margin:0 0 6px}.rc .qq:before{content:"「"}.rc .qq:after{content:"」"}
+.rc .a{font-size:13.5px;line-height:1.7;color:var(--olive);margin:0}.rc .a b{color:var(--ink);font-weight:600}
+.empty{color:var(--mute);font-size:13.5px;line-height:1.8}
+.nextstep{background:var(--red);color:#fff;border-radius:16px;padding:16px 18px;font-size:14.5px;line-height:1.8}.nextstep small{display:block;opacity:.8;font-size:11.5px;letter-spacing:.1em;margin-bottom:4px}
+@media (max-width:600px){.paper{padding:24px 18px 18px;border-radius:18px}.para{font-size:16px;line-height:2}.stats{grid-template-columns:repeat(2,1fr)}
+ #tool.mob{position:fixed;left:50%!important;top:auto!important;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%)}}
+</style></head><body><main class="tw">
+<span class="chip"><i></i>演示版 · 引导内容为预先写好，不调用 AI</span>
+<h1>引导式阅读</h1>
+<p class="sub">不是「你问，AI 答」，而是 AI 引导员在关键处主动出现。每一次提示都先引用原文，再提问题，读完给你一份阶段复盘。</p>
+
+<section id="s1">
+<div class="card"><h3>01 · 今天读这篇</h3>
+<div class="book"><div class="cover"><b>背影</b><small>朱自清 · 1925</small></div>
+<div><h2>朱自清《背影》</h2><p>全文 6 段，约 1300 字，预计 6 分钟。<br>1925 年首发于《文学周报》，已进入公有领域。</p></div></div></div>
+<div class="card"><h3>02 · 为什么读？</h3><div class="goals" id="goals"></div></div>
+<div class="card hide" id="routeC"><h3>03 · 你的阅读路线</h3><ol class="route" id="route"></ol>
+<p class="hint" style="margin:4px 0 14px">途中引导员会在 6 个关键处出现。读的时候选中任意一句，可以划线或写笔记。</p>
+<button class="btn pri" id="go">开始阅读 →</button></div>
+</section>
+
+<section id="s2" class="hide">
+<div class="pbar"><div class="t"><span id="pt">第 <b>1</b> / 6 段</span><span id="ps"></span></div><div class="tr"><i id="pi"></i></div></div>
+<article class="paper"><h2>背影</h2><p class="au">朱自清</p><div id="text"></div></article>
+<p class="hint2" id="selHint">试试选中一句话：划线，或写一条笔记</p>
+</section>
+
+<section id="s3" class="hide">
+<div class="card"><h3>阶段复盘 · <span id="rgoal"></span></h3><div class="stats" id="stats"></div></div>
+<div class="card"><h3>引导问答回顾</h3><div id="rqa"></div></div>
+<div class="card"><h3>我的划线与笔记</h3><div id="rhl"></div></div>
+<div class="nextstep" id="rnext"></div>
+<div class="row" style="margin-top:16px"><button class="btn" id="cpmd">复制复盘（Markdown）</button><button class="btn" id="again">再读一遍</button><button class="btn pri" id="regoal">换个目标重读</button></div>
+</section>
+</main>
+<div id="tool" class="hide"></div>
+<script src="../_shared/tool.js"></script>
+<script>
+const P=["我与父亲不相见已二年馀了，我最不能忘记的是他的背影。那年冬天，祖母死了，父亲的差使也交卸了，正是祸不单行的日子，我从北京到徐州，打算跟着父亲奔丧回家。到徐州见着父亲，看见满院狼藉的东西，又想起祖母，不禁簌簌地流下眼泪。父亲说，“事已如此，不必难过，好在天无绝人之路！”", "回家变卖典质，父亲还了亏空；又借钱办了丧事。这些日子，家中光景很是惨淡，一半为了丧事，一半为了父亲赋闲。丧事完毕，父亲要到南京谋事，我也要回北京念书，我们便同行。", "到南京时，有朋友约去游逛，勾留了一日；第二日上午便须渡江到浦口，下午上车北去。父亲因为事忙，本已说定不送我，叫旅馆里一个熟识的茶房陪我同去。他再三嘱付茶房，甚是仔细。但他终于不放心，怕茶房不妥帖；颇踌躇了一会。其实我那年已二十岁，北京已来往过两三次，是没有甚么要紧的了。他踌躇了一会，终于决定还是自己送我去。我两三回劝他不必去；他只说，“不要紧，他们去不好！”", "我们过了江，进了车站。我买票，他忙着照看行李。行李太多了，得向脚夫行些小费，才可过去。他便又忙着和他们讲价钱。我那时真是聪明过分，总觉他说话不大漂亮，非自己插嘴不可。但他终于讲定了价钱；就送我上车。他给我拣定了靠车门的一张椅子；我将他给我做的紫毛大衣铺好坐位。他嘱我路上小心，夜里要警醒些，不要受凉。又嘱托茶房好好照应我。我心里暗笑他的迂；他们只认得钱，托他们直是白托！而且我这样大年纪的人，难道还不能料理自己么？唉，我现在想想，那时真是太聪明了！", "我说道，“爸爸，你走吧。”他望车外看了看，说，“我买几个橘子去。你就在此地，不要走动。”我看那边月台的栅栏外有几个卖东西的等着顾客。走到那边月台，须穿过铁道，须跳下去又爬上去。父亲是一个胖子，走过去自然要费事些。我本来要去的，他不肯，只好让他去。我看见他戴着黑布小帽，穿着黑布大马褂，深青布棉袍，蹒跚地走到铁道边，慢慢探身下去，尚不大难。可是他穿过铁道，要爬上那边月台，就不容易了。他用两手攀着上面，两脚再向上缩；他肥胖的身子向左微倾，显出努力的样子。这时我看见他的背影，我的泪很快地流下来了。我赶紧拭干了泪，怕他看见，也怕别人看见。我再向外看时，他已抱了朱红的橘子望回走了。过铁道时，他先将橘子散放在地上，自己慢慢爬下，再抱起橘子走。到这边时，我赶紧去搀他。他和我走到车上，将橘子一股脑儿放在我的皮大衣上。于是扑扑衣上的泥土，心里狠轻松似的，过一会说，“我走了；到那边来信！”我望着他走出去。他走了几步，回过头看见我，说，“进去吧，里边没人。”等他的背影混入来来往往的人里，再找不着了，我便进来坐下，我的眼泪又来了。", "近几年来，父亲和我都是东奔西走，家中光景是一日不如一日。他少年出外谋生，独立支持，做了许多大事。那知老境却如此颓唐！他触目伤怀，自然情不能自已。情郁于中，自然要发之于外；家庭琐屑便往往触他之怒。他待我渐渐不同往日。但最近两年的不见，他终于忘却我的不好，只是惦记着我，惦记着我的儿子。我北来后，他写了一封信给我，信中说道，“我身体平安，惟膀子疼痛利害，举箸提笔，诸多不便，大约大去之期不远矣。”我读到此处，在晶莹的泪光中，又看见那肥胖的，青布棉袍，黑布马褂的背影。唉！我不知何时再能与他相见！"];
+const GOALS={
+ feel:{t:'读懂情感',d:'作者没写一个「爱」字，为什么能把人读哭？',route:[['第 1 段','开头一句：最忘不了的是背影'],['第 3 段','父亲两次「踌躇」'],['第 5 段','买橘子：第一次落泪'],['第 6 段','读信：泪光中的背影']],
+  next:'下次读带着这个问题：作者在哪些地方「想说又没说」？试着在别的文章里也找出三处。'},
+ write:{t:'学写作技巧',d:'拆细节和白描，拿来写自己的文章',route:[['第 1 段','开头一句就点题'],['第 4 段','反语「太聪明了」'],['第 5 段','只用动词的白描'],['第 6 段','首尾呼应']],
+  next:'练习：只写动作、不写形容词，写一段你家人的背影，100 字以内。'},
+ struct:{t:'像拆产品一样拆结构',d:'铺垫、误会、高潮、回响，各在哪里',route:[['第 1–2 段','钩子 + 铺垫'],['第 3–4 段','误会：儿子看不懂父亲'],['第 5 段','高潮：月台上的背影'],['第 6 段','回响：多年后的理解']],
+  next:'试着用「钩子—铺垫—误会—高潮—回响」拆一篇你喜欢的文章，或者一场产品发布会。'}};
+const CP=[
+ {quote:'我最不能忘记的是他的背影',type:'ask',q:'第一句就点出「背影」。先猜一猜：为什么作者最忘不了的是背影，而不是父亲的脸，或者某句话？',
+  opts:[['背影是分别时最后看到的画面','有道理。往下读你会发现，背影每次出现都在「离开」的时刻，比如「等他的背影混入来来往往的人里，再找不着了」。'],['看不见表情，反而留出想象','很好的写作直觉。全文没有一处写父亲的表情，读者会自己补上。'],['还没想好，先往下读','没关系，带着这个问题读，最后一段引导员会再来问你。']],
+  focus:{feel:'留意：作者对父亲的感情，全文一句都没有直说。',write:'留意：开篇一句话点题，后面每一次写背影都在呼应它。',struct:'这是「钩子」：先抛出结论，再倒回去讲原因。'}},
+ {quote:'一半为了丧事，一半为了父亲赋闲',type:'tip',tip:'这一句交代了全文的底色：家里同时失去了亲人和收入。后面父亲的每一个举动，都发生在这样的困境里。',
+  focus:{feel:'父亲自己也在难处，却先安慰儿子「事已如此，不必难过，好在天无绝人之路！」',write:'两个「一半」，把复杂的处境说得又短又准。',struct:'这是「铺垫」：先把压力给足，后面的温情才有分量。'}},
+ {quote:'他踌躇了一会，终于决定还是自己送我去',type:'ask',q:'「踌躇」在这一段出现了两次。你觉得父亲在犹豫什么？',
+  opts:[['事情太忙，抽不开身','原文是「父亲因为事忙，本已说定不送我」。忙是真的，可他最后还是放下了。'],['怕儿子嫌自己多事','很细的体会。儿子已经二十岁，父亲自己也知道「是没有甚么要紧的了」。'],['还是不放心','原文写「他终于不放心，怕茶房不妥帖」。最后一句「不要紧，他们去不好！」，把担心都说尽了。']],
+  focus:{feel:'不说「爱」，只写他犹豫了两次。',write:'同一个词重复两次，就是在提醒读者：这里很重要。',struct:'父亲的「不放心」，和儿子的「不必」，在这里第一次撞上。'}},
+ {quote:'唉，我现在想想，那时真是太聪明了！',type:'ask',q:'「太聪明了」是在夸自己吗？',
+  opts:[['是，年轻时确实很能干','再看前文：「我心里暗笑他的迂」。当时自以为的「聪明」，其实是看不懂父亲。'],['是反话，现在的自己在后悔','对。这是写作时的「我」在看当年的「我」。前面那句「我那时真是聪明过分」也是在自嘲。']],
+  focus:{feel:'注意有两个「我」：当年的我，和写这篇文章时的我。',write:'反语：嘴上说「聪明」，意思是「糊涂」。',struct:'「误会」到这里最深，也为下一段的转折蓄力。'}},
+ {quote:'他用两手攀着上面，两脚再向上缩；他肥胖的身子向左微倾，显出努力的样子。',type:'ask',q:'这是全文最有名的一句。哪个动作最让你有画面感？',
+  opts:[['「攀」：两手扒着月台','「攀」写出了月台高、父亲吃力。前文说「父亲是一个胖子」，到这里就有了重量。'],['「缩」：两脚往上缩','「缩」是最笨拙的动作，也最真实。这一句没有一个夸人的形容词，全靠动词。'],['「倾」：身子向左微倾','「微倾」很克制，只写了一点点倾斜，却让人看见他用上了全身的力气。']],
+  focus:{feel:'这是「背影」第二次出现，也是儿子第一次落泪：「我的泪很快地流下来了」。',write:'白描：攀、缩、倾，三个动词撑起整个画面。',struct:'全文的高潮。前面所有的铺垫，都在这一句兑现。'}},
+ {quote:'在晶莹的泪光中，又看见那肥胖的，青布棉袍，黑布马褂的背影',type:'free',q:'背影最后一次出现，和开头首尾呼应。回到出发时的问题：为什么是「背影」？用一句话写下你的答案。',
+  ref:'引导员的参考：背影是「看着一个人走远」的画面，「等他的背影混入来来往往的人里，再找不着了」。父亲不善表达，儿子当年也看不懂，直到读信这一刻，隔着距离才真正懂了他。',
+  focus:{feel:'信里一句「大约大去之期不远矣」，把所有没说出口的情绪都引了出来。',write:'结尾不写道理，只再写一次背影。',struct:'「回响」：开头抛出的钩子，在这里收回。'}}];
+let goal=null,cur=0,answers={},hls=[],t0=0,hid=0;
+const $$=s=>document.querySelectorAll(s);
+// ---- start
+$('#goals').innerHTML=Object.entries(GOALS).map(([k,g],i)=>`<button class="goal" data-g="${k}"><span class="n">${i+1}</span><span><b>${g.t}</b><span>${g.d}</span></span></button>`).join('');
+$('#goals').onclick=e=>{const b=e.target.closest('.goal');if(!b)return;goal=b.dataset.g;$$('.goal').forEach(x=>x.classList.toggle('on',x===b));
+ $('#route').innerHTML=GOALS[goal].route.map(r=>`<li><small>${r[0]}</small>${r[1]}</li>`).join('');$('#routeC').classList.remove('hide');$('#routeC').scrollIntoView({behavior:'smooth',block:'nearest'});};
+$('#go').onclick=()=>{cur=0;answers={};hls=[];t0=Date.now();$('#s1').classList.add('hide');$('#s3').classList.add('hide');$('#s2').classList.remove('hide');$('#text').innerHTML='';showP(0);scrollTo({top:0});};
+// ---- text rendering
+function segs(i){const T=P[i],b=new Set([0,T.length]);const rs=[];
+ const c=CP[i],qs=T.indexOf(c.quote);if(qs>=0&&(answers[i]!=null||cur===i))rs.push({s:qs,e:qs+c.quote.length,c:'q'});
+ hls.filter(h=>h.p===i).forEach(h=>rs.push({s:h.s,e:h.e,c:'hl'+(h.note?' nt':''),id:h.id}));
+ rs.forEach(r=>{b.add(r.s);b.add(r.e)});const pts=[...b].sort((x,y)=>x-y);let out='';
+ for(let k=0;k<pts.length-1;k++){const s=pts[k],e=pts[k+1],on=rs.filter(r=>r.s<=s&&r.e>=e);let h=escH(T.slice(s,e));
+  on.forEach(r=>{h=`<mark class="${r.c}"${r.id?` data-h="${r.id}"`:''}>${h}</mark>`});out+=h;}
+ return out;}
+function paint(i){const w=$('#pw'+i);if(!w)return;w.querySelector('.para').innerHTML=segs(i);
+ const ns=hls.filter(h=>h.p===i&&h.note);w.querySelector('.notes').innerHTML=ns.map(h=>`<div>✎ ${escH(h.note)} <q>${escH(P[i].slice(h.s,h.e).slice(0,18))}${h.e-h.s>18?'…':''}</q></div>`).join('');}
+function cites(s){return escH(s).replace(/「([^」]{4,})」/g,(m,q)=>{const i=P.findIndex(p=>p.includes(q));return i>=0?`<span class="cite" data-p="${i}" data-q="${escH(q)}">「${q}」</span>`:m;});}
+function showP(i){cur=i;const w=document.createElement('div');w.className='pw';w.id='pw'+i;w.innerHTML=`<p class="para" data-i="${i}"></p><div class="notes"></div>`;$('#text').appendChild(w);paint(i);prog();
+ if(i>0)setTimeout(()=>w.scrollIntoView({behavior:'smooth',block:'start'}),60);
+ setTimeout(()=>guide(i),900);}
+function prog(){const done=Object.keys(answers).length;$('#pt').innerHTML=`第 <b>${cur+1}</b> / ${P.length} 段`;$('#ps').textContent=`引导 ${done}/${CP.length} · 划线 ${hls.length}`;$('#pi').style.width=((cur+(answers[cur]!=null?1:.5))/P.length*100)+'%';}
+function flashQ(i,q){const el=[...$$('#pw'+i+' mark.q, #pw'+i+' mark.hl')].find(m=>q.includes(m.textContent)||m.textContent.includes(q));
+ if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');return;}
+ const p=$('#pw'+i);if(p){p.scrollIntoView({behavior:'smooth',block:'center'});}}
+function guide(i){const c=CP[i],g=document.createElement('div');g.className='guide';g.id='g'+i;
+ const n=i+1,last=i===P.length-1;
+ let body=`<div class="gh"><span class="av">引</span>引导员 · 第 ${n} 处</div><blockquote data-p="${i}">「${escH(c.quote)}」</blockquote><p class="fc">因为你选了「${GOALS[goal].t}」：${cites(c.focus[goal])}</p>`;
+ if(c.type==='tip')body+=`<p class="tip">${cites(c.tip)}</p><button class="btn pri ok">知道了，继续读 ↓</button>`;
+ else if(c.type==='ask')body+=`<p class="gq">${c.q}</p><div class="opts">${c.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o[0]}</button>`).join('')}</div><div class="rep"></div>`;
+ else body+=`<p class="gq">${c.q}</p><textarea placeholder="比如：因为……"></textarea><button class="btn pri sub">写好了</button><button class="btn skip">先看参考</button><div class="rep"></div>`;
+ g.innerHTML=body;$('#pw'+i).appendChild(g);
+ const mk=$('#pw'+i+' mark.q');if(mk){mk.classList.add('flash');}
+ setTimeout(()=>g.scrollIntoView({behavior:'smooth',block:'nearest'}),80);
+ const nextBtn=()=>last?`<button class="btn pri nextb fin">读完了，看阶段复盘 →</button>`:`<button class="btn pri nextb nx">继续读下一段 ↓</button>`;
+ const finish=(ans,html)=>{answers[i]=ans;prog();const r=g.querySelector('.rep');if(r){r.innerHTML=(html?`<div class="reply">${html}</div>`:'')+nextBtn();}else{g.querySelector('.ok').outerHTML=nextBtn();}};
+ g.onclick=e=>{const t=e.target;
+  if(t.closest('blockquote'))return flashQ(i,c.quote);
+  if(t.classList.contains('cite'))return flashQ(+t.dataset.p,t.dataset.q);
+  if(t.classList.contains('opt')&&!t.disabled){const k=+t.dataset.k;g.querySelectorAll('.opt').forEach(o=>{o.disabled=true;o.classList.toggle('on',o===t)});finish(c.opts[k][0],cites(c.opts[k][1]));}
+  if(t.classList.contains('ok'))finish('（提示）','');
+  if(t.classList.contains('sub')||t.classList.contains('skip')){const v=g.querySelector('textarea').value.trim();if(t.classList.contains('sub')&&!v){g.querySelector('textarea').focus();return;}
+   g.querySelector('textarea').disabled=true;g.querySelectorAll('.sub,.skip').forEach(b=>b.remove());finish(v||'（跳过，看了参考）',cites(c.ref));}
+  if(t.classList.contains('nx')){t.remove();showP(i+1);}
+  if(t.classList.contains('fin')){recap();}};}
+// ---- selection: highlight + note
+const tool=$('#tool');let pend=null;
+function offs(par,node,off){const r=document.createRange();r.setStart(par,0);r.setEnd(node,off);return r.toString().length;}
+function hideTool(){tool.classList.add('hide');pend=null;}
+function onSel(){if(tool.querySelector('.ed'))return;const s=getSelection();if(!s.rangeCount||s.isCollapsed){hideTool();return;}
+ const r=s.getRangeAt(0),a=(r.startContainer.nodeType===1?r.startContainer:r.startContainer.parentElement).closest('.para'),b=(r.endContainer.nodeType===1?r.endContainer:r.endContainer.parentElement).closest('.para');
+ if(!a||a!==b){hideTool();return;}let st=offs(a,r.startContainer,r.startOffset),en=offs(a,r.endContainer,r.endOffset);if(en-st<2){hideTool();return;}
+ pend={p:+a.dataset.i,s:st,e:en};tool.innerHTML='<button data-a="hl">划线</button><button data-a="note">✎ 写笔记</button>';place(r.getBoundingClientRect());}
+function place(rc){tool.classList.remove('hide');const mob=matchMedia('(max-width:600px)').matches||matchMedia('(pointer:coarse)').matches;tool.classList.toggle('mob',mob);
+ if(!mob){const w=tool.offsetWidth;tool.style.left=Math.max(8,Math.min(innerWidth-w-8,rc.left+rc.width/2-w/2+scrollX))+'px';tool.style.top=(rc.top+scrollY-tool.offsetHeight-10)+'px';}}
+document.addEventListener('mouseup',e=>{if(!tool.contains(e.target))setTimeout(onSel,10)});
+document.addEventListener('touchend',e=>{if(!tool.contains(e.target))setTimeout(onSel,350)});
+document.addEventListener('selectionchange',()=>{clearTimeout(window._sc);window._sc=setTimeout(()=>{if(matchMedia('(pointer:coarse)').matches)onSel();},400)});
+function addHl(note){const h={id:++hid,...pend,note:note||''};hls=hls.filter(x=>!(x.p===h.p&&x.s<h.e&&x.e>h.s));hls.push(h);getSelection().removeAllRanges();hideTool();paint(h.p);prog();$('#selHint').textContent=`已划线 ${hls.length} 处，点击划线可以修改或删除`;toast(note?'笔记已保存':'已划线');}
+tool.addEventListener('mousedown',e=>{if(e.target.tagName!=='TEXTAREA')e.preventDefault()});
+tool.onclick=e=>{const a=e.target.dataset.a;if(!a)return;
+ if(a==='hl')addHl('');
+ if(a==='note'||a==='edit'){const cur0=a==='edit'?hls.find(h=>h.id===pend.id):null;tool.innerHTML=`<div class="ed"><textarea placeholder="这句话让我想到……">${cur0?escH(cur0.note):''}</textarea><div class="row2">${cur0?'<button data-a="del">删除划线</button>':''}<button data-a="x">取消</button><button class="save" data-a="${cur0?'upd':'save'}">保存</button></div></div>`;place(tool.getBoundingClientRect());tool.querySelector('textarea').focus();}
+ if(a==='save')addHl(tool.querySelector('textarea').value.trim()||'');
+ if(a==='upd'){const h=hls.find(h=>h.id===pend.id);h.note=tool.querySelector('textarea').value.trim();hideTool();paint(h.p);toast('已更新');}
+ if(a==='del'){const h=hls.find(h=>h.id===pend.id);hls=hls.filter(x=>x!==h);hideTool();paint(h.p);prog();toast('已删除');}
+ if(a==='x')hideTool();};
+$('#text').addEventListener('click',e=>{const m=e.target.closest('mark.hl');if(!m||!getSelection().isCollapsed)return;const h=hls.find(x=>x.id===+m.dataset.h);if(!h)return;
+ pend={id:h.id};tool.innerHTML='<button data-a="edit">✎ 笔记</button><button data-a="del">删除划线</button>';place(m.getBoundingClientRect());});
+document.addEventListener('mousedown',e=>{if(!tool.contains(e.target)&&!e.target.closest('mark.hl')&&tool.querySelector('.ed'))hideTool();});
+// ---- recap
+function recap(){hideTool();const sec=Math.round((Date.now()-t0)/1000),G=GOALS[goal];
+ $('#s2').classList.add('hide');$('#s3').classList.remove('hide');scrollTo({top:0});
+ $('#rgoal').textContent=G.t;
+ const asked=CP.filter(c=>c.type!=='tip').length;
+ $('#stats').innerHTML=[[P.length+'/'+P.length,'读完段落'],[Object.keys(answers).filter(k=>CP[k].type!=='tip').length+'/'+asked,'回答引导问题'],[hls.length,'划线'],[`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`,'用时']].map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+ $('#rqa').innerHTML=CP.map((c,i)=>c.type==='tip'?'':`<div class="rc"><p class="qq">${escH(c.quote)}</p><p class="a">${escH(c.q)}<br><b>你的回答：</b>${escH(answers[i]||'—')}</p></div>`).join('');
+ $('#rhl').innerHTML=hls.length?[...hls].sort((a,b)=>a.p-b.p||a.s-b.s).map(h=>`<div class="rc"><p class="qq">${escH(P[h.p].slice(h.s,h.e))}</p>${h.note?`<p class="a"><b>笔记：</b>${escH(h.note)}</p>`:`<p class="a">第 ${h.p+1} 段</p>`}</div>`).join(''):'<p class="empty">这一遍没有划线。下次读的时候，选中让你停下来的句子，复盘里会帮你收好。</p>';
+ $('#rnext').innerHTML=`<small>下一步 · 引导员建议</small>${escH(G.next)}`;}
+function md(){const G=GOALS[goal];let s=`# 《背影》阶段复盘 · ${G.t}\n\n## 引导问答\n`;CP.forEach((c,i)=>{if(c.type!=='tip')s+=`\n> ${c.quote}\n\n${c.q}\n\n**我的回答：**${answers[i]||'—'}\n`});
+ s+=`\n## 划线与笔记\n`;hls.forEach(h=>{s+=`\n> ${P[h.p].slice(h.s,h.e)}\n${h.note?'\n'+h.note+'\n':''}`});return s+`\n## 下一步\n\n${G.next}\n`;}
+$('#cpmd').onclick=()=>copy(md());
+$('#again').onclick=()=>$('#go').click();
+$('#regoal').onclick=()=>{$('#s3').classList.add('hide');$('#s1').classList.remove('hide');$('#routeC').classList.add('hide');goal=null;$$('.goal').forEach(x=>x.classList.remove('on'));scrollTo({top:0});};
+</script>
+<script src="../_shared/demo.js" data-name="Kruthi" data-license="MIT" data-repo="https://github.com/bebhuvan/kruthi"></script>
+</body></html>

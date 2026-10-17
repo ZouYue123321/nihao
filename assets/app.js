@@ -1,14 +1,14 @@
 /* 页面渲染 + 阅读器 + 隐藏编辑模式。一般不需要修改此文件。 */
 (function(){
 const LS='zouyue-site-content-v2', LSA='zouyue-site-articles-v1';
-const EDIT=/[?&]edit=1/.test(location.search);
+const EDIT=/[?&]edit=1/.test(location.search);var RAW0=null;
 const ORIG=JSON.parse(JSON.stringify(window.SITE));
 let S=window.SITE, editing=EDIT;
-if(EDIT){try{const x=localStorage.getItem(LS);if(x){S=JSON.parse(x);for(const k in ORIG)if(!(k in S))S[k]=ORIG[k];/* 已删除的板块和实验：旧草稿里也去掉 */const GONE=['小汤 · 猫咪语音伙伴','戳泡泡 · 点一下','手机桌宠'];delete S.workflow;if(Array.isArray(S.sections))S.sections=S.sections.filter(s=>s&&s.type!=='workflow');if(Array.isArray(S.experiments))S.experiments=S.experiments.filter(e=>!(e&&!e.link&&GONE.includes(e.title)));if(JSON.stringify(S)!==x)try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}if(Array.isArray(S.experiments)){const have=new Set(S.experiments.map(e=>e.link||e.title));(ORIG.experiments||[]).forEach(e=>{if(e.link&&!have.has(e.link)&&!S.experiments.some(x=>x.title===e.title))S.experiments.push(JSON.parse(JSON.stringify(e)));});}if(Array.isArray(S.articles)){/* content.js 里新加的文章自动补进旧草稿；草稿里删掉过的不再加回 */let seen=null;try{seen=JSON.parse(localStorage.getItem(LS+':seenArt')||'null');}catch(e){}const have=new Set(S.articles.map(x=>x.id));(ORIG.articles||[]).forEach(e=>{if(!have.has(e.id)&&!(seen&&seen.includes(e.id)))S.articles.push(JSON.parse(JSON.stringify(e)));});}}}catch(e){}try{localStorage.setItem(LS+':seenArt',JSON.stringify((ORIG.articles||[]).map(x=>x.id)));}catch(e){}}
+if(EDIT){try{const x=localStorage.getItem(LS);if(x){S=JSON.parse(x);RAW0=JSON.parse(x);for(const k in ORIG)if(!(k in S))S[k]=ORIG[k];/* 已删除的板块和实验：旧草稿里也去掉 */const GONE=['小汤 · 猫咪语音伙伴','戳泡泡 · 点一下','手机桌宠'];delete S.workflow;if(Array.isArray(S.sections))S.sections=S.sections.filter(s=>s&&s.type!=='workflow');if(Array.isArray(S.experiments))S.experiments=S.experiments.filter(e=>!(e&&!e.link&&GONE.includes(e.title)));if(JSON.stringify(S)!==x)try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}if(Array.isArray(S.experiments)){const have=new Set(S.experiments.map(e=>e.link||e.title));(ORIG.experiments||[]).forEach(e=>{if(e.link&&!have.has(e.link)&&!S.experiments.some(x=>x.title===e.title))S.experiments.push(JSON.parse(JSON.stringify(e)));});}if(Array.isArray(S.articles)){/* content.js 里新加的文章自动补进旧草稿；草稿里删掉过的不再加回 */let seen=null;try{seen=JSON.parse(localStorage.getItem(LS+':seenArt')||'null');}catch(e){}const have=new Set(S.articles.map(x=>x.id));(ORIG.articles||[]).forEach(e=>{if(!have.has(e.id)&&!(seen&&seen.includes(e.id)))S.articles.push(JSON.parse(JSON.stringify(e)));});}}}catch(e){}try{localStorage.setItem(LS+':seenArt',JSON.stringify((ORIG.articles||[]).map(x=>x.id)));}catch(e){}}
 /* content.js 更新后与浏览器草稿对齐（首屏一句话、关于我、产品笔记、成长记录、结束语）：
  * 草稿里这几项没动过 → 自动换成 content.js 的新内容；草稿里改过、content.js 也变了 → 底部提示，让你选。 */
 const LSB=LS+':base',SYNC={'hero.lead':'首屏一句话',about:'关于我',notes:'产品笔记',timeline:'成长记录',experiments:'小实验','contact.headline':'结束语'};
-const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6'],'contact.headline':['lgjt25']};/* 2026.10.17 之前 content.js 的版本指纹 */
+const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6','v5mhgc'],'contact.headline':['lgjt25']};/* 2026.10.17 之前 content.js 的版本指纹 */
 const hsh=t=>{let x=5381;for(let i=0;i<t.length;i++)x=((x<<5)+x+t.charCodeAt(i))|0;return (x>>>0).toString(36)};
 const gp=(o,p)=>p.split('.').reduce((o,k)=>o==null?o:o[k],o);
 const sp=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k]=o[k]||{},o)[l]=JSON.parse(JSON.stringify(v));};
@@ -18,8 +18,9 @@ if(EDIT){let base={};try{base=JSON.parse(localStorage.getItem(LSB)||'{}')||{};}c
  const had=!!localStorage.getItem(LS);let changed=false;
  for(const k in SYNC){const o=JSON.stringify(gp(ORIG,k)),d=JSON.stringify(gp(S,k));
   if(!had||o===d||base[k]===hsh(o)){base[k]=hsh(o);continue;}
-  const untouched=base[k]?hsh(String(d))===base[k]:(LEGACY[k]||[]).includes(hsh(String(d)));
+  const tst=v=>base[k]?hsh(String(v))===base[k]:(LEGACY[k]||[]).includes(hsh(String(v)));const untouched=tst(d)||(RAW0&&tst(JSON.stringify(gp(RAW0,k))));
   if(untouched||d===undefined){sp(S,k,gp(ORIG,k));base[k]=hsh(o);changed=true;}else syncConflicts.push(k);}
+ /* 已下线的小实验（链接已失效）：草稿里也去掉 */if(Array.isArray(S.experiments)){const n=S.experiments.length;S.experiments=S.experiments.filter(e=>!(e&&/demos\/(paste-desk|file-drop)\//.test(e.link||'')));if(n!==S.experiments.length)changed=true;}
  try{if(changed)localStorage.setItem(LS,JSON.stringify(S));localStorage.setItem(LSB,JSON.stringify(base));}catch(e){}}
 function syncBanner(){if(!syncConflicts.length)return;const b=document.createElement('div');b.id='esync';
  b.innerHTML=`<span>content.js 里的「${syncConflicts.map(k=>SYNC[k]).join('」「')}」更新了，但你在这个浏览器里也改过。</span><button data-s="new">用最新内容</button><button data-s="keep">保留我的修改</button>`;
@@ -91,9 +92,9 @@ notes(){const f=window.__nf||'全部';
 <div class="notes" id="nlist">${cards||'<p class="nempty">这一类还没有笔记。</p>'}</div>${pg}${EDIT?`<div class="nadd"><button class="eadd" data-list="notes" data-type="拆解">＋ 添加拆解</button> <button class="eadd" data-list="notes" data-type="测评">＋ 添加测评</button></div>`:''}`},
 lab(){return `<div class="exps">${S.experiments.map((x,i)=>{const P='experiments.'+i;
  const shot=x.image?`<img data-img="${P}.image" src="${esc(x.image)}" alt="">`:x.art==='film'?`<div class="film" data-img="${P}.image"><div class="m">${[[22,28],[58,22],[40,52],[66,60],[24,66]].map((q,j)=>`<span class="h" style="left:${q[0]}%;top:${q[1]}%;animation-delay:${j*.25}s"></span>`).join('')}</div></div>`:`<div class="film" data-img="${P}.image"><span class="dots">· · ·</span></div>`;
- const shotH=x.link&&!EDIT?`<a class="shot" href="${esc(x.link)}" aria-label="${esc(x.title)}">${shot}</a>`:`<div class="shot">${shot}</div>`;
+ const shotH=x.link&&!EDIT?`<a class="shot" href="${esc(x.link)}" data-x="${i}" aria-label="${esc(x.title)}"><span class="xzoom">点开试玩 ⤢</span>${shot}</a>`:`<div class="shot">${shot}</div>`;
  const tag=x.tag||EDIT?T('span',P+'.tag','xtag'):'';
- const go=x.link&&!EDIT?`<a class="xgo" href="${esc(x.link)}">立即体验 →</a>`:EDIT?`<div class="xlink">链接：${T('span',P+'.link')}</div>`:'';
+ const go=x.link&&!EDIT?`<a class="xgo" href="${esc(x.link)}" data-x="${i}">立即体验 →</a>`:EDIT?`<div class="xlink">链接：${T('span',P+'.link')}</div>`:'';
  return `<article class="exp rv eitem">${shotH}<div class="body"><span class="status ${x.wip?'wip':''}"><i></i>${T('span',P+'.status')}</span>${tag}${T('h3',P+'.title')}${T('p',P+'.desc')}<dl>${x.points.map((_,j)=>`<div class="eitem dl">${T('dt',P+'.points.'+j+'.k')}${T('dd',P+'.points.'+j+'.v')}${ctl(P+'.points',j)}</div>`).join('')}</dl>${add(P+'.points')}${go}${EDIT?`<label class="etog"><input type="checkbox" data-bool="${P}.wip" ${x.wip?'checked':''}> 进行中（空心圆点）</label>`:''}</div>${ctl('experiments',i)}</article>`}).join('')}</div>${add('experiments')}`},
 growth(){return `<div class="tl">${S.timeline.map((t,i)=>`<div class="ti rv eitem ${t.placeholder?'ph':''}">${T('time','timeline.'+i+'.date')}${T('h3','timeline.'+i+'.title')}${T('p','timeline.'+i+'.desc')}${EDIT?`<label class="etog"><input type="checkbox" data-bool="timeline.${i}.placeholder" ${t.placeholder?'checked':''}> 占位</label>`:''}${ctl('timeline',i)}</div>`).join('')}</div>${add('timeline')}`}
 };
@@ -214,5 +215,37 @@ if(EDIT){editBar();syncBanner();
  window.SITE_EDIT={get S(){return S},UP,artOverrides,upReady,putBody,delBody,save,render,loadArticle,openReader,exportJS,articleJS,esc,pad,dkey,PER,
   setPage(p){artPage=p},get storage(){return idb?'indexeddb':'localstorage'}};
  const sc=document.createElement('script');sc.src='assets/upload.js';document.head.appendChild(sc);}
+
+/* 小实验：点卡片原地放大成浮层（iframe 内运行），再点缩小回卡片；不跳转、不刷新、保留滚动位置 */
+const XO=(()=>{let ov,pan,fr,cur=null,busy=false;const RM=matchMedia('(prefers-reduced-motion:reduce)');
+ function build(){ov=document.createElement('div');ov.id='xov';ov.innerHTML='<div class="xbd"></div><div class="xpan" role="dialog" aria-modal="true" aria-label="小实验"><div class="xhd"><b class="xt"></b><span class="xtg"></span><a class="xnew" target="_blank" rel="noopener">新窗口打开 ↗</a><button class="xcl" type="button" aria-label="缩小">缩小 <span>✕</span></button></div><div class="xfr"><img class="xph" alt=""><div class="xld"><i></i>正在打开…</div></div></div>';
+  document.body.appendChild(ov);pan=ov.querySelector('.xpan');fr=ov.querySelector('.xfr');
+  ov.querySelector('.xbd').onclick=req;ov.querySelector('.xcl').onclick=req;}
+ const rectOf=el=>el&&el.getBoundingClientRect();
+ function fly(from,to,dur,done){if(RM.matches||!from||!from.width){pan.style.transform='';done&&done();return;}
+  pan.style.transition='none';pan.style.transformOrigin='0 0';
+  const T=(r)=>{const P=pan.getBoundingClientRect();return `translate(${r.left-P.left}px,${r.top-P.top}px) scale(${r.width/P.width},${r.height/P.height})`;};
+  pan.style.transform=from==='self'?'':T(from);void pan.offsetWidth;
+  pan.style.transition=`transform ${dur}ms cubic-bezier(.2,.8,.2,1),border-radius ${dur}ms`;pan.style.transform=to==='self'?'':T(to);
+  let ok=false;const end=()=>{if(ok)return;ok=true;pan.removeEventListener('transitionend',end);done&&done();};pan.addEventListener('transitionend',end);setTimeout(end,dur+80);}
+ function open(i,src){if(busy||cur)return;const x=S.experiments[i];if(!x||!x.link)return;if(!ov)build();busy=true;
+  const card=document.querySelectorAll('#lab .exp .shot')[i]||src;cur={i,card,y:scrollY};
+  ov.querySelector('.xt').textContent=x.title;ov.querySelector('.xtg').textContent=x.tag||'';ov.querySelector('.xnew').href=x.link;
+  const ph=ov.querySelector('.xph');ph.src=x.image||'';ph.style.display=x.image?'':'none';ov.classList.add('open','show');fr.classList.remove('ready');
+  document.body.classList.add('noscroll');document.documentElement.classList.add('xopen');
+  try{history.pushState({xov:1},'',location.href);}catch(e){}
+  fly(rectOf(card),'self',520,()=>{busy=false;load(x.link);ov.querySelector('.xcl').focus({preventScroll:true});});}
+ function load(link){const f=document.createElement('iframe');f.title=S.experiments[cur.i].title;f.setAttribute('allow','microphone; autoplay; fullscreen; clipboard-read; clipboard-write');f.setAttribute('allowfullscreen','');
+  f.src=link+(link.includes('?')?'&':'?')+'embed=1';f.onload=()=>{fr.classList.add('ready');try{f.contentWindow.addEventListener('keydown',e=>{if(e.key==='Escape')req();});f.contentWindow.focus();}catch(e){}};fr.appendChild(f);}
+ function close(){if(!cur||busy)return;busy=true;const f=fr.querySelector('iframe');if(f){try{f.src='about:blank';}catch(e){}f.remove();}fr.classList.remove('ready');
+  ov.classList.remove('show');const c=cur;scrollTo(0,c.y);
+  fly('self',rectOf(c.card),420,()=>{ov.classList.remove('open');pan.style.transition='none';pan.style.transform='';document.body.classList.remove('noscroll');document.documentElement.classList.remove('xopen');scrollTo(0,c.y);cur=null;busy=false;
+   const g=c.card;g&&g.focus&&g.focus({preventScroll:true});});}
+ function req(){if(!cur)return;if(history.state&&history.state.xov)history.back();else close();}
+ addEventListener('popstate',()=>{if(cur)close();});
+ addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)req();});
+ document.addEventListener('click',e=>{const a=e.target.closest('a[data-x]');if(!a||EDIT||editing||e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();open(+a.dataset.x,a);});
+ return {open,close,get cur(){return cur}};})();
+window.__XO=XO;
 render();route();
 })();

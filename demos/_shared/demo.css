@@ -8,3 +8,4 @@
 .mz-bar .back:hover{background:var(--red);color:#fff}
 .mz-credit{position:fixed;left:0;right:0;bottom:0;z-index:1000;text-align:center;padding:8px 12px;font:11px/1.6 var(--sans);letter-spacing:.04em;color:var(--mute);pointer-events:none}
 .mz-credit a{color:var(--ink);pointer-events:auto;text-decoration:underline;text-underline-offset:3px}
+html.mz-embed .mz-bar{display:none}html.mz-embed .tw{padding-top:34px}

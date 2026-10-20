@@ -367,3 +367,7 @@ body.editing .eup{border-style:solid;opacity:.9;margin-right:8px}
 #xov .xfr.ready iframe{opacity:1}
 @media (max-width:760px){#xov .xpan{width:100vw;height:100vh;height:100dvh;border-radius:0}#xov .xhd{padding:calc(10px + env(safe-area-inset-top)) 10px 10px 16px}#xov .xnew{font-size:12px;padding:8px 6px}#xov .xcl{padding:9px 13px}#xov .xtg{display:none}
  .exp .shot .xzoom{opacity:1;transform:none}}
+.xacts{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 22px;margin-top:22px}
+.xacts .xgo{margin-top:0}
+.xrepo{font:600 14px/1 var(--disp);color:inherit;opacity:.65;text-decoration:underline;text-underline-offset:3px;transition:opacity .2s}
+.xrepo:hover{opacity:1;color:var(--red)}

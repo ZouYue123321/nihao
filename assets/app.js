@@ -8,7 +8,7 @@ if(EDIT){try{const x=localStorage.getItem(LS);if(x){S=JSON.parse(x);RAW0=JSON.pa
 /* content.js 更新后与浏览器草稿对齐（首屏一句话、关于我、产品笔记、成长记录、结束语）：
  * 草稿里这几项没动过 → 自动换成 content.js 的新内容；草稿里改过、content.js 也变了 → 底部提示，让你选。 */
 const LSB=LS+':base',SYNC={'hero.lead':'首屏一句话',about:'关于我',notes:'产品笔记',timeline:'成长记录',experiments:'小实验','contact.headline':'结束语','hero.meta':'首屏信息','contact.email':'邮箱'};
-const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6','v5mhgc'],'contact.headline':['lgjt25'],'hero.meta':['vumsu0'],'contact.email':['1cnwroy']};/* 2026.10.17 之前 content.js 的版本指纹 */
+const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6','v5mhgc','dt7yqh'],'contact.headline':['lgjt25'],'hero.meta':['vumsu0'],'contact.email':['1cnwroy']};/* 2026.10.17 之前 content.js 的版本指纹 */
 const hsh=t=>{let x=5381;for(let i=0;i<t.length;i++)x=((x<<5)+x+t.charCodeAt(i))|0;return (x>>>0).toString(36)};
 const gp=(o,p)=>p.split('.').reduce((o,k)=>o==null?o:o[k],o);
 const sp=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k]=o[k]||{},o)[l]=JSON.parse(JSON.stringify(v));};
@@ -20,7 +20,7 @@ if(EDIT){let base={};try{base=JSON.parse(localStorage.getItem(LSB)||'{}')||{};}c
   if(!had||o===d||base[k]===hsh(o)){base[k]=hsh(o);continue;}
   const tst=v=>base[k]?hsh(String(v))===base[k]:(LEGACY[k]||[]).includes(hsh(String(v)));const untouched=tst(d)||(RAW0&&tst(JSON.stringify(gp(RAW0,k))));
   if(untouched||d===undefined){sp(S,k,gp(ORIG,k));base[k]=hsh(o);changed=true;}else syncConflicts.push(k);}
- /* 已下线的小实验（链接已失效）：草稿里也去掉 */if(Array.isArray(S.experiments)){const n=S.experiments.length;S.experiments=S.experiments.filter(e=>!(e&&/demos\/(paste-desk|file-drop)\//.test(e.link||'')));if(n!==S.experiments.length)changed=true;}
+ /* 已下线的小实验（链接已失效）：草稿里也去掉 */if(Array.isArray(S.experiments)){const n=S.experiments.length;S.experiments=S.experiments.filter(e=>!(e&&/demos\/(paste-desk|file-drop|tower-game|t-rex)\//.test(e.link||'')));if(n!==S.experiments.length)changed=true;}
  try{if(changed)localStorage.setItem(LS,JSON.stringify(S));localStorage.setItem(LSB,JSON.stringify(base));}catch(e){}}
 function syncBanner(){if(!syncConflicts.length)return;const b=document.createElement('div');b.id='esync';
  b.innerHTML=`<span>content.js 里的「${syncConflicts.map(k=>SYNC[k]).join('」「')}」更新了，但你在这个浏览器里也改过。</span><button data-s="new">用最新内容</button><button data-s="keep">保留我的修改</button>`;
@@ -94,7 +94,7 @@ lab(){return `<div class="exps">${S.experiments.map((x,i)=>{const P='experiments
  const shot=x.image?`<img data-img="${P}.image" src="${esc(x.image)}" alt="">`:x.art==='film'?`<div class="film" data-img="${P}.image"><div class="m">${[[22,28],[58,22],[40,52],[66,60],[24,66]].map((q,j)=>`<span class="h" style="left:${q[0]}%;top:${q[1]}%;animation-delay:${j*.25}s"></span>`).join('')}</div></div>`:`<div class="film" data-img="${P}.image"><span class="dots">· · ·</span></div>`;
  const shotH=x.link&&!EDIT?`<a class="shot" href="${esc(x.link)}" data-x="${i}" aria-label="${esc(x.title)}"><span class="xzoom">点开试玩 ⤢</span>${shot}</a>`:`<div class="shot">${shot}</div>`;
  const tag=x.tag||EDIT?T('span',P+'.tag','xtag'):'';
- const go=x.link&&!EDIT?`<a class="xgo" href="${esc(x.link)}" data-x="${i}">立即体验 →</a>`:EDIT?`<div class="xlink">链接：${T('span',P+'.link')}</div>`:'';
+ const go=x.link&&!EDIT?`<div class="xacts"><a class="xgo" href="${esc(x.link)}" data-x="${i}">立即体验 →</a>${x.repo?`<a class="xrepo" href="${esc(x.repo)}" target="_blank" rel="noopener">GitHub 仓库 ↗</a>`:''}</div>`:EDIT?`<div class="xlink">链接：${T('span',P+'.link')}</div>`:'';
  return `<article class="exp rv eitem">${shotH}<div class="body"><span class="status ${x.wip?'wip':''}"><i></i>${T('span',P+'.status')}</span>${tag}${T('h3',P+'.title')}${T('p',P+'.desc')}<dl>${x.points.map((_,j)=>`<div class="eitem dl">${T('dt',P+'.points.'+j+'.k')}${T('dd',P+'.points.'+j+'.v')}${ctl(P+'.points',j)}</div>`).join('')}</dl>${add(P+'.points')}${go}${EDIT?`<label class="etog"><input type="checkbox" data-bool="${P}.wip" ${x.wip?'checked':''}> 进行中（空心圆点）</label>`:''}</div>${ctl('experiments',i)}</article>`}).join('')}</div>${add('experiments')}`},
 growth(){return `<div class="tl">${S.timeline.map((t,i)=>`<div class="ti rv eitem ${t.placeholder?'ph':''}">${T('time','timeline.'+i+'.date')}${T('h3','timeline.'+i+'.title')}${T('p','timeline.'+i+'.desc')}${EDIT?`<label class="etog"><input type="checkbox" data-bool="timeline.${i}.placeholder" ${t.placeholder?'checked':''}> 占位</label>`:''}${ctl('timeline',i)}</div>`).join('')}</div>${add('timeline')}`}
 };

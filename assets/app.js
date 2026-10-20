@@ -8,7 +8,7 @@ if(EDIT){try{const x=localStorage.getItem(LS);if(x){S=JSON.parse(x);RAW0=JSON.pa
 /* content.js 更新后与浏览器草稿对齐（首屏一句话、关于我、产品笔记、成长记录、结束语）：
  * 草稿里这几项没动过 → 自动换成 content.js 的新内容；草稿里改过、content.js 也变了 → 底部提示，让你选。 */
 const LSB=LS+':base',SYNC={'hero.lead':'首屏一句话',about:'关于我',notes:'产品笔记',timeline:'成长记录',experiments:'小实验','contact.headline':'结束语','hero.meta':'首屏信息','contact.email':'邮箱'};
-const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6','v5mhgc','dt7yqh','a1ln1j','1hukaik'],'contact.headline':['lgjt25'],'hero.meta':['vumsu0'],'contact.email':['1cnwroy']};/* 2026.10.17 之前 content.js 的版本指纹 */
+const LEGACY={'hero.lead':['j96l36'],about:['u8b8v0'],notes:['rq424u'],timeline:['g3djw9'],experiments:['c0c1z6','v5mhgc','dt7yqh','a1ln1j','1hukaik','wrrxyr'],'contact.headline':['lgjt25'],'hero.meta':['vumsu0'],'contact.email':['1cnwroy']};/* 2026.10.17 之前 content.js 的版本指纹 */
 const hsh=t=>{let x=5381;for(let i=0;i<t.length;i++)x=((x<<5)+x+t.charCodeAt(i))|0;return (x>>>0).toString(36)};
 const gp=(o,p)=>p.split('.').reduce((o,k)=>o==null?o:o[k],o);
 const sp=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k]=o[k]||{},o)[l]=JSON.parse(JSON.stringify(v));};

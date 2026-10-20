@@ -163,13 +163,13 @@ window.SITE = {
       points: [ { k: "演示", v: "引导内容为预先写好，不调用 AI；思路来自我正在做的引导式阅读 App" } ] },
     { title: "词根闯关", status: "在线可玩", wip: false, tag: "AI 学习", link: "https://zouyue123321.github.io/word-root-quest/", repo: "https://github.com/ZouYue123321/word-root-quest", image: "assets/demos/word-root-quest.jpg", art: "",
       desc: "给初中生的词根记单词：228 个词根分 46 关逐关解锁，每关 8 道小测，答对 80% 才能过关；连续打卡，错词本里的词连对两次才移出。",
-      points: [ { k: "改编", v: "基于开源项目 word-root-workshop，清理了原数据里的占位和重复词根" } ] },
+      points: [ { k: "思路", v: "把一次铺开的 300 个词根拆成小关卡，给初中生明确的下一步和即时反馈" } ] },
     { title: "表达训练镜子", status: "在线可玩", wip: false, tag: "AI 互动", link: "demos/speech-mirror/index.html", repo: "https://github.com/ZouYue123321/speech-mirror", image: "assets/demos/speech-mirror.jpg", art: "",
       desc: "说一段话或上传录音，AI 在浏览器里转成文字，数出「然后、其实、就是」各说了几次，再说一遍还能和上次对比。",
       points: [ { k: "原理", v: "Whisper 语音识别模型通过 Transformers.js 在本地运行，录音不上传" } ] },
     { title: "像素心情日记", status: "在线可玩", wip: false, tag: "情绪记录", link: "https://zouyue123321.github.io/pixy-mood-diary/", repo: "https://github.com/ZouYue123321/pixy-mood-diary", image: "assets/demos/pixy-mood-diary.jpg", art: "",
       desc: "一天一格记录心情，一年拼成一张像素图；每周自动生成回顾，连续几天低落时会温和地提醒你找人聊聊。",
-      points: [ { k: "改编", v: "基于开源手机 App pixy-mood-tracker，重做为网页版；数据只存在本地浏览器" } ] }
+      points: [ { k: "思路", v: "把写日记降到一次点击，用年度像素图和每周回顾让记录有回报；数据只存在本地" } ] }
   ],
 
   // 成长记录：按书写顺序显示（最新的写在最上面）；date 可以写任意文字（如 "现在"）

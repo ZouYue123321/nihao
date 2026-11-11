@@ -22,7 +22,7 @@ window.SITE = {
     meta: [
       { label: "关注", value: "AI Agent · 产品体验" },
       { label: "正在做", value: "写作 · 拆解 · 小实验" },
-      { label: "联系", value: "melodyz1386@163.com" }
+      { label: "联系", value: "zouyue@melodyzpm.com" }
     ]
   },
 
@@ -185,5 +185,5 @@ window.SITE = {
   ],
 
   // 页脚联系
-  contact: { headline: "纸上得来终觉浅，\n绝知此事要躬行。", email: "melodyz1386@163.com", copyright: "", credit: "" }
+  contact: { headline: "纸上得来终觉浅，\n绝知此事要躬行。", email: "zouyue@melodyzpm.com", copyright: "", credit: "" }
 };

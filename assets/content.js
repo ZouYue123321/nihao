@@ -172,7 +172,10 @@ window.SITE = {
       points: [ { k: "原理", v: "Whisper 语音识别模型通过 Transformers.js 在本地运行，录音不上传" } ] },
     { title: "像素心情日记", status: "在线可玩", wip: false, tag: "情绪记录", link: "https://zouyue123321.github.io/pixy-mood-diary/", repo: "https://github.com/ZouYue123321/pixy-mood-diary", image: "assets/demos/pixy-mood-diary.jpg", art: "",
       desc: "一天一格记录心情，一年拼成一张像素图；每周自动生成回顾，连续几天低落时会温和地提醒你找人聊聊。",
-      points: [ { k: "思路", v: "把写日记降到一次点击，用年度像素图和每周回顾让记录有回报；数据只存在本地" } ] }
+      points: [ { k: "思路", v: "把写日记降到一次点击，用年度像素图和每周回顾让记录有回报；数据只存在本地" } ] },
+    { title: "材料预审工作台", status: "在线可玩", wip: false, tag: "规则演示", link: "demos/material-precheck/index.html", repo: "", image: "assets/demos/material-precheck.jpg", art: "",
+      desc: "个人消费贷款的离线演示。案例和材料都是内置虚构样本，字段按模拟抽取读出，校验规则在浏览器里真实计算。可以改正字段、重新检查，并把报告导出到本机。不是 OCR，也不判断能不能贷款。",
+      points: [ { k: "边界", v: "内置虚构材料，模拟字段抽取，规则真实计算，不构成贷款审批。导出留在本机。" } ] }
   ],
 
   // 成长记录：按书写顺序显示（最新的写在最上面）；date 可以写任意文字（如 "现在"）

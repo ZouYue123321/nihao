@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>材料预审工作台</title>
+<style>
+  :root {
+    --bg: #e7eef1;
+    --paper: #ffffff;
+    --sheet: #fffefb;
+    --ink: #1b3344;
+    --muted: #3e5564;
+    --faint: #5d7382;
+    --navy: #16344a;
+    --teal: #0e6e68;
+    --teal-2: #0f5c58;
+    --teal-soft: #e5f4f2;
+    --line: #d3dee4;
+    --amber: #8a5a12;
+    --amber-soft: #fbf4e6;
+    --green: #1c6b45;
+    --green-soft: #e7f5ee;
+    --hit: #fff1c2;
+    --shadow: 0 1px 2px rgba(22, 52, 74, 0.06);
+    --sans: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    --serif: "Songti SC", "STSong", "SimSun", "PMingLiU", "WenQuanYi Micro Hei", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  button.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+  button.quiet { background: transparent; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+  }
+  .topbar, .disclosure {
+    background: var(--paper);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; gap: 10px; align-items: center; min-width: 220px; }
+  .mark {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--navy); color: #fff;
+    display: grid; place-items: center; font-weight: 700;
+  }
+  h1 { font-size: 16px; margin: 0; letter-spacing: 0.01em; }
+  .eyebrow { margin: 0; color: var(--faint); font-size: 12px; }
+  .rulemeta { color: var(--muted); font-size: 12px; line-height: 1.35; white-space: pre-line; }
+  .reviewer { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+  .reviewer span { white-space: nowrap; }
+  .reviewer input { width: 132px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .disclosure {
+    padding: 8px 14px;
+    background: var(--teal-soft);
+    color: var(--teal-2);
+    font-weight: 650;
+    border-bottom: 1px solid #c7e4e1;
+  }
+  .subnote { padding: 4px 14px 8px; background: var(--paper); color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+  .paneswitch { display: none; gap: 6px; padding: 8px 10px 0; }
+  .paneswitch button[aria-selected="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .workbench {
+    height: calc(100vh - 118px);
+    display: grid;
+    grid-template-columns: 292px minmax(0, 1fr) 372px;
+    gap: 10px;
+    padding: 10px;
+  }
+  .pane {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+  }
+  .pane-scroll { overflow: auto; padding: 10px; min-height: 0; }
+  .pane-label {
+    margin: 8px 4px 6px;
+    font-size: 12px;
+    color: var(--teal-2);
+    font-weight: 700;
+  }
+  .case-btn, .mat-btn {
+    width: 100%;
+    text-align: left;
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .case-btn.is-on, .mat-btn.is-on { border-color: var(--teal); background: var(--teal-soft); }
+  .case-top, .mat-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .case-name { font-weight: 700; }
+  .case-sum, .meta { color: var(--faint); font-size: 12px; margin-top: 3px; }
+  .case-initial summary { cursor: pointer; color: var(--faint); font-size: 12px; }
+  .pill {
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 11px;
+    border: 1px solid var(--line);
+    white-space: nowrap;
+    background: #f6f8f9;
+  }
+  .pill[data-state="pending-supplement"] { background: var(--amber-soft); color: var(--amber); border-color: #efd7ae; }
+  .pill[data-state="pending-review"] { background: #eaf1f6; color: var(--navy); border-color: #c9d8e4; }
+  .pill[data-state="pending-report"] { background: var(--teal-soft); color: var(--teal-2); border-color: #b7ddd9; }
+  .pill[data-state="completed"] { background: var(--green-soft); color: var(--green); border-color: #b7e0c9; }
+  .mat-btn.missing { border-style: dashed; color: var(--amber); background: #fffaf2; }
+  .mat-btn.is-hit { box-shadow: inset 3px 0 0 var(--teal); background: var(--hit); }
+  .center-head, .right-head {
+    padding: 10px 12px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .center-head h2, .right-head h2 { font-size: 15px; margin: 0; }
+  .seg { display: flex; gap: 4px; flex: 0 0 auto; }
+  .seg button { white-space: nowrap; }
+  .seg button[aria-selected="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .tabs { display: flex; gap: 4px; padding: 8px 12px 0; }
+  .sheet-wrap { display: grid; gap: 8px; }
+  .sheet-wrap.compare { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .sheet {
+    position: relative;
+    background: var(--sheet);
+    border: 1px solid #e4dcc8;
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    overflow: hidden;
+    font-family: var(--serif);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+  }
+  .sheet.is-selected { border-color: var(--teal); }
+  .sheet::after {
+    content: "虚构样本";
+    position: absolute;
+    left: 8%;
+    top: 32%;
+    font-size: 42px;
+    font-weight: 700;
+    color: rgba(22, 52, 74, 0.06);
+    transform: rotate(-16deg);
+    pointer-events: none;
+    font-family: var(--sans);
+  }
+  .sheet .kicker { color: #8a6a32; font-size: 12px; font-family: var(--sans); }
+  .sheet h3 { margin: 4px 0 6px; font-size: 18px; }
+  .sheet p { margin: 6px 0; font-size: 13px; }
+  .sheet .row, .sheet .txn {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 1;
+  }
+  .sheet .k { color: #6d5c40; }
+  .sheet .v.unreadable {
+    background: repeating-linear-gradient(-45deg, #f7f1e4, #f7f1e4 5px, #efe4cf 5px, #efe4cf 9px);
+    color: #6b5738;
+  }
+  .is-hit { background: var(--hit); box-shadow: inset 3px 0 0 var(--teal); }
+  .quality-banner {
+    font-family: var(--sans);
+    font-size: 12px;
+    background: var(--amber-soft);
+    color: var(--amber);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .sheet-cap { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .fields { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .fields th { text-align: left; font-size: 12px; color: var(--faint); font-weight: 650; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .fields td { padding: 6px 4px; border-bottom: 1px solid #e6eef2; vertical-align: top; }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    border-radius: 999px;
+    padding: 1px 6px;
+    background: #eef3f6;
+    color: var(--navy);
+  }
+  .tag.warn { background: var(--amber-soft); color: var(--amber); }
+  .tag.ok { background: var(--green-soft); color: var(--green); }
+  .issue {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 8px;
+    background: #fff;
+  }
+  .issue.is-selected { border-color: var(--teal); box-shadow: inset 3px 0 0 var(--teal); }
+  .issue.resolved { background: #f7fbf9; }
+  .issue.superseded { background: #f6f7f8; color: var(--muted); }
+  .chip {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 6px;
+    padding: 2px 6px;
+    background: #e8eef3;
+    color: var(--navy);
+  }
+  .calc {
+    background: #f5f8f9;
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc div { margin: 2px 0; }
+  .complete-bar {
+    border-top: 1px solid var(--line);
+    padding: 8px 10px 10px;
+    background: #fbfcfd;
+  }
+  .checkline { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--amber); margin: 6px 0; }
+  .okhint { font-size: 12px; color: var(--green); margin: 6px 0; }
+  .modal-back, .drawer-back {
+    position: fixed; inset: 0;
+    background: rgba(18, 36, 48, 0.35);
+    z-index: 20;
+    display: flex;
+  }
+  .modal-back { align-items: center; justify-content: center; padding: 16px; }
+  .drawer-back { justify-content: flex-end; }
+  .modal, .drawer {
+    background: white;
+    border-radius: 12px;
+    width: min(560px, 100%);
+    max-height: min(86vh, 820px);
+    overflow: auto;
+    padding: 14px;
+    box-shadow: 0 12px 40px rgba(18, 36, 48, 0.2);
+  }
+  .drawer { width: min(640px, 100%); height: 100%; max-height: none; border-radius: 0; }
+  .modal h3, .drawer h3 { margin: 0 0 8px; }
+  label.stack { display: block; margin: 8px 0; font-size: 12px; color: var(--muted); }
+  input[type="text"], textarea, select {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 8px;
+    background: #fff;
+  }
+  textarea { min-height: 78px; resize: vertical; }
+  .form-error { color: #8d3a3a; font-size: 12px; }
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: #fff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    z-index: 30;
+    max-width: min(640px, 92vw);
+  }
+  pre.report {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    background: #f6f8f9;
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .foot {
+    padding: 0 14px 12px;
+    color: var(--faint);
+    font-size: 12px;
+  }
+  .testout { font-size: 12px; background: #f6f8f9; border-radius: 8px; padding: 8px; max-height: 240px; overflow: auto; }
+  @media (max-width: 980px) {
+    .workbench { height: auto; grid-template-columns: 1fr; }
+    .pane { display: none; min-height: 70vh; }
+    .pane.is-on { display: flex; }
+    .paneswitch { display: flex; flex-wrap: wrap; }
+    .actions { margin-left: 0; }
+    .center-head .seg { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">预</div>
+    <div>
+      <h1>材料预审工作台</h1>
+      <p class="eyebrow">个人消费贷款 · 单人复核 · 虚构演示</p>
+    </div>
+  </div>
+  <div class="rulemeta" id="rule-meta"></div>
+  <label class="reviewer"><span>复核人</span>
+    <input id="reviewer-name" type="text" value="复核员（演示）" maxlength="20" autocomplete="off">
+  </label>
+  <div class="actions">
+    <button type="button" id="btn-recheck">重新检查</button>
+    <button type="button" id="btn-supplement">补充或替换</button>
+    <button type="button" id="btn-report" class="primary">报告</button>
+    <button type="button" id="btn-export-txt">导出 TXT</button>
+    <button type="button" id="btn-export-json">导出 JSON</button>
+    <button type="button" id="btn-reset-case">重置本案</button>
+  </div>
+</header>
+<div class="disclosure" id="disclosure-banner"></div>
+<div class="subnote">差异只提示需要人工说明。这里不判断真实性、欺诈、信用、可贷性，也不给出额度、利率、通过或拒绝。</div>
+<nav class="paneswitch" id="pane-switch"></nav>
+<main class="workbench">
+  <aside class="pane is-on" id="pane-cases" data-pane="cases"></aside>
+  <section class="pane" id="pane-center" data-pane="center"></section>
+  <aside class="pane" id="pane-issues" data-pane="issues"></aside>
+</main>
+<p class="foot" id="page-foot"></p>
+<div id="modal-root"></div>
+<div id="drawer-root"></div>
+<div id="toast" class="toast" hidden></div>
+<script id="precheck-engine">
+"use strict";
+(function () {
+  var RULE_VERSION = "DEMO-RULES-1.0.0";
+  var BASELINE_DATE = "2026-11-24";
+  var DISCLOSURE = "内置虚构材料 · 模拟字段抽取 · 规则真实计算 · 不构成贷款审批";
+  var NOT_A_DECISION = "这只说明材料需要人工解释，不是贷款审批、额度、利率、征信、通过或拒绝。";
+  var SEED_AT = "2026-11-24T01:00:00.000Z";
+  var TYPE_ORDER = ["application", "identity", "income", "statement"];
+  var TYPE_LABEL = {
+    application: "贷款申请书",
+    identity: "模拟身份证明",
+    income: "收入证明",
+    statement: "账户流水"
+  };
+  var STATE_LABEL = {
+    "pending-review": "待复核",
+    "pending-supplement": "待补充",
+    "pending-report": "待出报告",
+    completed: "已完成"
+  };
+  var CATEGORY_LABEL = {
+    salary: "工资入账",
+    bonus: "奖金",
+    transfer: "转账",
+    refund: "退款",
+    unknown: "类别未知"
+  };
+  var FIELD_DEFS = {
+    application: [
+      { key: "applicantName", label: "申请人", kind: "name", required: true },
+      { key: "mockId", label: "模拟证件号", kind: "id", required: true },
+      { key: "applicationDate", label: "申请日期", kind: "date", required: true },
+      { key: "loanPurpose", label: "贷款用途", kind: "text", required: true },
+      { key: "declaredMonthlyIncomeCents", label: "申报月收入", kind: "cents", required: true },
+      { key: "requestedAmountCents", label: "申请金额", kind: "cents", required: false }
+    ],
+    identity: [
+      { key: "name", label: "姓名", kind: "name", required: true },
+      { key: "mockId", label: "模拟证件号", kind: "id", required: true },
+      { key: "validFrom", label: "有效期起", kind: "date", required: true },
+      { key: "validTo", label: "有效期止", kind: "date", required: true }
+    ],
+    income: [
+      { key: "name", label: "姓名", kind: "name", required: true },
+      { key: "mockId", label: "模拟证件号", kind: "id", required: true },
+      { key: "employerName", label: "工作单位", kind: "text", required: true },
+      { key: "monthlyIncomeCents", label: "月收入", kind: "cents", required: true },
+      { key: "issueDate", label: "开具日期", kind: "date", required: true },
+      { key: "periodStart", label: "收入期间起", kind: "date", required: true },
+      { key: "periodEnd", label: "收入期间止", kind: "date", required: true }
+    ],
+    statement: [
+      { key: "accountName", label: "户名", kind: "name", required: true },
+      { key: "mockId", label: "模拟证件号", kind: "id", required: true },
+      { key: "periodStart", label: "流水期间起", kind: "date", required: true },
+      { key: "periodEnd", label: "流水期间止", kind: "date", required: true },
+      { key: "transactions", label: "交易明细", kind: "transactions", required: true }
+    ]
+  };
+  var NAME_SLOTS = [
+    ["application", "applicantName", "申请书申请人"],
+    ["identity", "name", "身份证明姓名"],
+    ["income", "name", "收入证明姓名"],
+    ["statement", "accountName", "流水户名"]
+  ];
+  var ID_SLOTS = [
+    ["application", "mockId", "申请书模拟证件号"],
+    ["identity", "mockId", "身份证明模拟证件号"],
+    ["income", "mockId", "收入证明模拟证件号"],
+    ["statement", "mockId", "流水模拟证件号"]
+  ];
+  var RULEBOOK = [
+    { id: "R01", title: "必备材料", text: "当前卷内要同时有贷款申请书、模拟身份证明、收入证明、账户流水。缺一类就生成关键待办。这是演示清单，不是银行清单。" },
+    { id: "R02", title: "未知与不可读", text: "必填字段当前值为空，或交易金额不可读，就保持空值，不补数，并生成关键待办。" },
+    { id: "R03", title: "姓名与模拟证件号", text: "姓名做 NFKC、去掉空白和间隔号后比较；模拟证件号做 NFKC、去掉空白和连字符并转成大写后比较。界面保留原文。不一致只提示复核。" },
+    { id: "R04", title: "日期与覆盖", text: "基准日固定为 2026-11-24。身份有效期须覆盖基准日。申请日不晚于基准日且不早于基准日前 30 日。收入证明开具日不晚于基准日且不早于基准日前 90 日。流水须为至少 3 个完整自然月，止日不晚于基准日且不早于基准日前 31 日。收入期间与流水期间都已知时必须相同。日期为空时不在本规则里补判。" },
+    { id: "R05", title: "月收入数字", text: "只把类别为工资入账且金额可读的交易计入。合计除以完整自然月数，整数分向下取整，余数单独列示。再与申报月收入、收入证明月收入两两比较。差额绝对值大于 0 分就提示说明。奖金、转账、退款不计入。缺材料或期间未知时不编造数字。不用浮点。" },
+    { id: "R06", title: "来源不确定", text: "材料版本若标记为不确定或不可读，就进入人工复核。不生成置信度、准确率或模型分数。" }
+  ];
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function formatCents(cents) {
+    if (cents == null || !isFiniteNumber(cents) || Math.round(cents) !== cents) return "—";
+    var neg = cents < 0;
+    var abs = Math.abs(cents);
+    var yuan = Math.floor(abs / 100);
+    var fen = abs % 100;
+    return (neg ? "-" : "") + yuan + "." + String(fen).padStart(2, "0");
+  }
+
+  function isFiniteNumber(n) {
+    return typeof n === "number" && isFinite(n);
+  }
+
+  function parseYuanToCents(input) {
+    var s = String(input == null ? "" : input).trim().replace(/，/g, "").replace(/,/g, "");
+    var matched = s.match(/^(\d{1,9})(?:\.(\d{1,2}))?$/);
+    if (!matched) return null;
+    return Number(matched[1]) * 100 + Number((matched[2] || "").padEnd(2, "0"));
+  }
+
+  function parseISODate(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    var y = Number(value.slice(0, 4));
+    var m = Number(value.slice(5, 7));
+    var d = Number(value.slice(8, 10));
+    var utc = Date.UTC(y, m - 1, d);
+    var dt = new Date(utc);
+    if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+    return { y: y, m: m, d: d, utc: utc, text: value };
+  }
+
+  function daysBetween(earlier, later) {
+    return Math.round((later.utc - earlier.utc) / 86400000);
+  }
+
+  function analyzeFullMonths(startStr, endStr) {
+    var start = parseISODate(startStr);
+    var end = parseISODate(endStr);
+    if (!start || !end) return { ok: false, reason: "日期无法解析" };
+    if (start.utc > end.utc) return { ok: false, reason: "起日晚于止日" };
+    if (start.d !== 1) return { ok: false, reason: "起日不是当月 1 日，演示规则不把它当成完整自然月" };
+    var last = new Date(Date.UTC(end.y, end.m, 0)).getUTCDate();
+    if (end.d !== last) return { ok: false, reason: "止日不是当月最后一日，演示规则不把它当成完整自然月" };
+    var months = (end.y - start.y) * 12 + (end.m - start.m) + 1;
+    return { ok: true, months: months, start: start, end: end };
+  }
+
+  function normalizeName(value) {
+    if (value == null) return null;
+    return String(value).normalize("NFKC").replace(/[\s\u00B7\u2022\u30FB\u2027\u2219.．·]/g, "").toLowerCase();
+  }
+
+  function normalizeId(value) {
+    if (value == null) return null;
+    return String(value).normalize("NFKC").replace(/[\s\-_]/g, "").toUpperCase();
+  }
+
+  function stableStringify(value) {
+    if (value === null || typeof value !== "object") return JSON.stringify(value);
+    if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+    var keys = Object.keys(value).sort();
+    return "{" + keys.map(function (key) {
+      return JSON.stringify(key) + ":" + stableStringify(value[key]);
+    }).join(",") + "}";
+  }
+
+function fieldBox(value, sourceStatus) {
+  var extracted = value != null && typeof value === "object" ? clone(value) : value;
+  var current = value != null && typeof value === "object" ? clone(value) : value;
+  return {
+    extracted: extracted,
+    current: current,
+    sourceStatus: sourceStatus || (value == null ? "unreadable" : "readable"),
+    corrections: []
+  };
+}
+
+  function yuanText(cents) {
+    if (cents == null) return "（不可读）";
+    return formatCents(cents) + " 元";
+  }
+
+  function categoryLabel(category) {
+    return CATEGORY_LABEL[category] || "类别未知";
+  }
+
+  function currentVersion(material) {
+    return material.versions[material.versions.length - 1];
+  }
+
+  function materialByType(caseObj, type) {
+    for (var i = 0; i < caseObj.materials.length; i += 1) {
+      if (caseObj.materials[i].type === type) return caseObj.materials[i];
+    }
+    return null;
+  }
+
+  function readCurrent(version, key) {
+    if (!version || !version.fields[key]) return null;
+    return version.fields[key].current;
+  }
+
+  function blockText(version, key) {
+    for (var i = 0; i < version.blocks.length; i += 1) {
+      if (version.blocks[i].key === key) return version.blocks[i].text;
+    }
+    return null;
+  }
+
+  function displayRaw(kind, value) {
+    if (value == null || value === "") return "（空）";
+    if (kind === "cents") return formatCents(value) + " 元";
+    if (kind === "transactions") return Array.isArray(value) ? value.length + " 笔" : "（空）";
+    return String(value);
+  }
+
+  function kindOf(type, key) {
+    var defs = FIELD_DEFS[type] || [];
+    for (var i = 0; i < defs.length; i += 1) if (defs[i].key === key) return defs[i].kind;
+    return "text";
+  }
+
+  function fieldEvidence(material, version, key, label) {
+    var field = version.fields[key];
+    var kind = kindOf(material.type, key);
+    var current = field ? field.current : null;
+    return {
+      materialId: material.id,
+      versionId: version.id,
+      type: material.type,
+      label: label,
+      anchors: [key],
+      originalText: blockText(version, key),
+      extracted: field ? field.extracted : null,
+      current: current,
+      normalized: kind === "name" ? normalizeName(current) : kind === "id" ? normalizeId(current) : current
+    };
+  }
+
+  function makeIssue(spec) {
+    return {
+      key: spec.key,
+      ruleId: spec.ruleId,
+      blocking: true,
+      status: "open",
+      title: spec.title,
+      summary: spec.summary,
+      explanation: spec.explanation,
+      evidence: spec.evidence,
+      calculation: spec.calculation || null,
+      fingerprint: stableStringify({
+        rule: RULE_VERSION,
+        key: spec.key,
+        summary: spec.summary,
+        evidence: spec.evidence,
+        calculation: spec.calculation || null
+      }),
+      resolution: null,
+      priorResolution: null,
+      trail: []
+    };
+  }
+
+  function applicationMaterial(caseId, data) {
+    var fields = {
+      applicantName: fieldBox(data.name),
+      mockId: fieldBox(data.mockId),
+      applicationDate: fieldBox(data.applicationDate),
+      loanPurpose: fieldBox(data.purpose),
+      declaredMonthlyIncomeCents: fieldBox(data.declared),
+      requestedAmountCents: fieldBox(data.requested)
+    };
+    return {
+      id: caseId + "-application",
+      type: "application",
+      versions: [baseVersion(caseId + "-application-v1", "原始样本", {
+        fields: fields,
+        blocks: [
+          { type: "kicker", text: "虚构文本 · 无印章 · 非银行制式" },
+          { type: "h", text: "贷款申请书" },
+          { type: "p", text: "文件编号 " + data.docNo + "。这是演示填写页，不是递交给金融机构的申请。" },
+          { type: "field", key: "applicantName", label: "申请人", text: data.name },
+          { type: "field", key: "mockId", label: "模拟证件号", text: data.mockId },
+          { type: "field", key: "applicationDate", label: "申请日期", text: data.applicationDate },
+          { type: "field", key: "loanPurpose", label: "贷款用途", text: data.purpose },
+          { type: "field", key: "declaredMonthlyIncomeCents", label: "申报月收入", text: yuanText(data.declared) },
+          { type: "field", key: "requestedAmountCents", label: "申请金额", text: yuanText(data.requested) },
+          { type: "watermark", text: "虚构样本 · 非真实银行文件" }
+        ]
+      })]
+    };
+  }
+
+  function identityMaterial(caseId, data) {
+    return {
+      id: caseId + "-identity",
+      type: "identity",
+      versions: [baseVersion(caseId + "-identity-v1", "原始样本", {
+        fields: {
+          name: fieldBox(data.name),
+          mockId: fieldBox(data.mockId),
+          validFrom: fieldBox(data.validFrom),
+          validTo: fieldBox(data.validTo)
+        },
+        blocks: [
+          { type: "kicker", text: "简化文本 · 不是证件 · 没有照片和印章" },
+          { type: "h", text: "模拟身份证明" },
+          { type: "p", text: "号码是演示编号，不是公民身份号码。" },
+          { type: "field", key: "name", label: "姓名", text: data.name },
+          { type: "field", key: "mockId", label: "模拟证件号", text: data.mockId },
+          { type: "field", key: "validFrom", label: "有效期起", text: data.validFrom },
+          { type: "field", key: "validTo", label: "有效期止", text: data.validTo },
+          { type: "watermark", text: "虚构样本 · 非真实银行文件" }
+        ]
+      })]
+    };
+  }
+
+  function incomeVersion(id, label, data) {
+    var periodStartText = data.periodStart == null ? "（不可读）" : data.periodStart;
+    var periodEndText = data.periodEnd == null ? "（不可读）" : data.periodEnd;
+    return baseVersion(id, label, {
+      extractionQuality: data.quality || "readable",
+      extractionNote: data.note || "内置样本直读（模拟抽取，不是 OCR）",
+      fields: {
+        name: fieldBox(data.name),
+        mockId: fieldBox(data.mockId),
+        employerName: fieldBox(data.employer),
+        monthlyIncomeCents: fieldBox(data.monthly),
+        issueDate: fieldBox(data.issueDate),
+        periodStart: fieldBox(data.periodStart, data.periodStart == null ? "unreadable" : "readable"),
+        periodEnd: fieldBox(data.periodEnd, data.periodEnd == null ? "unreadable" : "readable")
+      },
+      blocks: [
+        { type: "kicker", text: "虚构单位 · 无公章" },
+        { type: "h", text: "收入证明" },
+        { type: "p", text: data.lead || "下列句子只是演示文本。" },
+        { type: "field", key: "name", label: "姓名", text: data.name },
+        { type: "field", key: "mockId", label: "模拟证件号", text: data.mockId },
+        { type: "field", key: "employerName", label: "工作单位", text: data.employer },
+        { type: "field", key: "monthlyIncomeCents", label: "月收入", text: yuanText(data.monthly) },
+        { type: "field", key: "issueDate", label: "开具日期", text: data.issueDate },
+        { type: "field", key: "periodStart", label: "收入期间起", text: periodStartText, unreadable: data.periodStart == null },
+        { type: "field", key: "periodEnd", label: "收入期间止", text: periodEndText, unreadable: data.periodEnd == null },
+        { type: "watermark", text: "虚构样本 · 非真实银行文件" }
+      ]
+    });
+  }
+
+  function incomeMaterial(caseId, data) {
+    return {
+      id: caseId + "-income",
+      type: "income",
+      versions: [incomeVersion(caseId + "-income-v1", "原始样本", data)]
+    };
+  }
+
+  function statementMaterial(caseId, data) {
+    var txns = data.txns.map(function (row) {
+      return { date: row[0], category: row[1], amountCents: row[2], summary: row[3], readable: true };
+    });
+    var blocks = [
+      { type: "kicker", text: "虚构流水 · 演示银行并非真实机构" },
+      { type: "h", text: "账户流水" },
+      { type: "p", text: "账户编号 " + data.accountNo + "。明细是简化文本，不是账单影像。" },
+      { type: "field", key: "accountName", label: "户名", text: data.name },
+      { type: "field", key: "mockId", label: "模拟证件号", text: data.mockId },
+      { type: "field", key: "periodStart", label: "流水期间起", text: data.periodStart },
+      { type: "field", key: "periodEnd", label: "流水期间止", text: data.periodEnd }
+    ];
+    txns.forEach(function (txn, index) {
+      blocks.push({
+        type: "txn",
+        key: "txn-" + index,
+        label: "交易 " + (index + 1),
+        text: txn.date + "  " + categoryLabel(txn.category) + "  " + yuanText(txn.amountCents) + "  " + txn.summary
+      });
+    });
+    blocks.push({ type: "watermark", text: "虚构样本 · 非真实银行文件" });
+    return {
+      id: caseId + "-statement",
+      type: "statement",
+      versions: [baseVersion(caseId + "-statement-v1", "原始样本", {
+        fields: {
+          accountName: fieldBox(data.name),
+          mockId: fieldBox(data.mockId),
+          periodStart: fieldBox(data.periodStart),
+          periodEnd: fieldBox(data.periodEnd),
+          transactions: fieldBox(txns)
+        },
+        blocks: blocks
+      })]
+    };
+  }
+
+  function baseVersion(id, label, extra) {
+    return {
+      id: id,
+      label: label,
+      origin: "original",
+      addedAt: SEED_AT,
+      addedBy: "样本库",
+      reason: "初始内置样本",
+      extractionQuality: extra.extractionQuality || "readable",
+      extractionNote: extra.extractionNote || "内置样本直读（模拟抽取，不是 OCR）",
+      fields: extra.fields,
+      blocks: extra.blocks,
+      supersededAt: null
+    };
+  }
+
+  function bareVersion(version) {
+    var copy = clone(version);
+    delete copy.id;
+    return copy;
+  }
+
+  function createInitialState() {
+    return {
+      cases: [
+        finishCase(buildNormal()),
+        finishCase(buildMissing()),
+        finishCase(buildComposite())
+      ]
+    };
+  }
+
+  function finishCase(partial) {
+    var evaluated = evaluate(partial);
+    partial.issues = mergeIssues([], evaluated.issues, SEED_AT).issues;
+    partial.passes = evaluated.passes;
+    partial.events = [{
+      id: "evt-1",
+      at: SEED_AT,
+      actor: "规则引擎",
+      type: "initial-check",
+      summary: "按 " + RULE_VERSION + " 完成初次计算",
+      detail: "基准日 " + BASELINE_DATE + "。结果由当前样本现算，不是预先写死的结论。"
+    }];
+    partial.lastCheckedAt = SEED_AT;
+    partial.humanConfirmed = false;
+    partial.completedAt = null;
+    partial.completionActor = null;
+    return partial;
+  }
+
+  function buildNormal() {
+    var id = "case-normal";
+    return {
+      id: id,
+      applicant: "陈思远",
+      initialTitle: "口径一致",
+      initialSummary: "四类材料都在，姓名、模拟证件号和月收入数字一致。",
+      materials: [
+        applicationMaterial(id, {
+          name: "陈思远", mockId: "SYN-ID-A-10086", applicationDate: "2026-11-20",
+          purpose: "家居装修", declared: 1800000, requested: 20000000, docNo: "DEMO-APP-A-0142"
+        }),
+        identityMaterial(id, { name: "陈思远", mockId: "SYN-ID-A-10086", validFrom: "2020-01-01", validTo: "2030-01-01" }),
+        incomeMaterial(id, {
+          name: "陈思远", mockId: "SYN-ID-A-10086", employer: "演示科技有限公司",
+          monthly: 1800000, issueDate: "2026-11-10", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+          lead: "演示科技有限公司为虚构名称。收入数字与后附流水的工资入账按同一期间编写。"
+        }),
+        statementMaterial(id, {
+          name: "陈思远", mockId: "SYN-ID-A-10086", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+          accountNo: "DEMO-ACCT-A",
+          txns: [
+            ["2026-08-15", "salary", 1800000, "工资"],
+            ["2026-08-28", "transfer", 50000, "转入演示款"],
+            ["2026-09-15", "salary", 1800000, "工资"],
+            ["2026-10-15", "salary", 1800000, "工资"],
+            ["2026-10-20", "refund", 12000, "购物退款"]
+          ]
+        })
+      ],
+      presets: [{
+        id: "preset-a-app-20k",
+        type: "application",
+        label: "申请书替换样本 · 申报月收入 20000.00 元",
+        blurb: "其余字段与原申请书相同，只把申报月收入改成另一数字，用来观察规则重算。",
+        version: bareVersion(applicationMaterial(id, {
+          name: "陈思远", mockId: "SYN-ID-A-10086", applicationDate: "2026-11-20",
+          purpose: "家居装修", declared: 2000000, requested: 20000000, docNo: "DEMO-APP-A-0142-R"
+        }).versions[0])
+      }]
+    };
+  }
+
+  function buildMissing() {
+    var id = "case-missing";
+    return {
+      id: id,
+      applicant: "林晓彤",
+      initialTitle: "缺少收入证明",
+      initialSummary: "申请书、模拟身份证明和流水在卷，收入证明不在卷。",
+      materials: [
+        applicationMaterial(id, {
+          name: "林晓彤", mockId: "SYN-ID-B-10021", applicationDate: "2026-11-12",
+          purpose: "家庭日常消费", declared: 1200000, requested: 8000000, docNo: "DEMO-APP-B-0208"
+        }),
+        identityMaterial(id, { name: "林晓彤", mockId: "SYN-ID-B-10021", validFrom: "2021-05-01", validTo: "2031-05-01" }),
+        statementMaterial(id, {
+          name: "林晓彤", mockId: "SYN-ID-B-10021", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+          accountNo: "DEMO-ACCT-B",
+          txns: [
+            ["2026-08-12", "salary", 1200000, "工资"],
+            ["2026-09-03", "transfer", 80000, "亲友转入"],
+            ["2026-09-12", "salary", 1200000, "工资"],
+            ["2026-10-12", "salary", 1200000, "工资"]
+          ]
+        })
+      ],
+      presets: [
+        {
+          id: "preset-b-income-match",
+          type: "income",
+          label: "收入证明样本 · 与申报及工资入账一致",
+          blurb: "月收入 12000.00 元，期间与流水相同，来源标记为可读。",
+          version: bareVersion(incomeVersion(id + "-income-match", "收入证明 · 一致样本", {
+            name: "林晓彤", mockId: "SYN-ID-B-10021", employer: "演示设计工作室",
+            monthly: 1200000, issueDate: "2026-11-08", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+            lead: "演示设计工作室为虚构名称。本页数字与申请书、工资入账相同。"
+          }))
+        },
+        {
+          id: "preset-b-income-diff",
+          type: "income",
+          label: "收入证明样本 · 月收入数字不同",
+          blurb: "月收入写成 9000.00 元，其余身份与期间对齐。补充后缺件消失，金额差异会出现。",
+          version: bareVersion(incomeVersion(id + "-income-diff", "收入证明 · 金额不同样本", {
+            name: "林晓彤", mockId: "SYN-ID-B-10021", employer: "演示设计工作室",
+            monthly: 900000, issueDate: "2026-11-08", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+            lead: "这一份故意把月收入写成另一个整数，方便看差额提示。"
+          }))
+        }
+      ]
+    };
+  }
+
+  function buildComposite() {
+    var id = "case-composite";
+    return {
+      id: id,
+      applicant: "周启明",
+      initialTitle: "多项待说明",
+      initialSummary: "姓名和模拟证件号跨材料不一致，月收入数字不同，收入证明有不可读期间。",
+      materials: [
+        applicationMaterial(id, {
+          name: "周启明", mockId: "SYN-ID-C-20001", applicationDate: "2026-11-18",
+          purpose: "职业技能培训", declared: 2500000, requested: 12000000, docNo: "DEMO-APP-C-0315"
+        }),
+        identityMaterial(id, { name: "周启明", mockId: "SYN-ID-C-20999", validFrom: "2019-03-01", validTo: "2029-03-01" }),
+        incomeMaterial(id, {
+          name: "周启铭", mockId: "SYN-ID-C-20001", employer: "演示贸易商行",
+          monthly: 1800000, issueDate: "2026-10-20", periodStart: null, periodEnd: null,
+          quality: "uncertain",
+          note: "样本把期间两行标成不可读，整页来源标记为不确定。没有置信度百分比。",
+          lead: "期间一行在样本里标成无法辨认。系统保持为空，不补猜。"
+        }),
+        statementMaterial(id, {
+          name: "周启明", mockId: "SYN-ID-C-20001", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+          accountNo: "DEMO-ACCT-C",
+          txns: [
+            ["2026-08-10", "salary", 1500000, "工资"],
+            ["2026-08-05", "transfer", 300000, "他行转入"],
+            ["2026-09-10", "salary", 1500000, "工资"],
+            ["2026-09-18", "bonus", 200000, "补贴"],
+            ["2026-10-10", "salary", 1500001, "工资"]
+          ]
+        })
+      ],
+      presets: [
+        {
+          id: "preset-c-identity-align",
+          type: "identity",
+          label: "身份证明替换样本 · 模拟证件号与申请书一致",
+          blurb: "姓名仍是周启明，模拟证件号改为 SYN-ID-C-20001。",
+          version: bareVersion(identityMaterial(id, {
+            name: "周启明", mockId: "SYN-ID-C-20001", validFrom: "2019-03-01", validTo: "2029-03-01"
+          }).versions[0])
+        },
+        {
+          id: "preset-c-income-align",
+          type: "income",
+          label: "收入证明替换样本 · 可读且月收入 15000.00 元",
+          blurb: "姓名与模拟证件号对齐，期间与流水相同，月收入等于工资月均的整数分。",
+          version: bareVersion(incomeVersion(id + "-income-align", "收入证明 · 对齐样本", {
+            name: "周启明", mockId: "SYN-ID-C-20001", employer: "演示贸易商行",
+            monthly: 1500000, issueDate: "2026-11-15", periodStart: "2026-08-01", periodEnd: "2026-10-31",
+            lead: "替换样本把先前不可读的期间写成与流水相同的三个完整月。"
+          }))
+        }
+      ]
+    };
+  }
+
+  function evaluate(caseObj) {
+    var issues = [];
+    var r04notes = [];
+    evaluateR01(caseObj, issues);
+    evaluateR02(caseObj, issues);
+    evaluateR03(caseObj, issues);
+    evaluateR04(caseObj, issues, r04notes);
+    evaluateR05(caseObj, issues);
+    evaluateR06(caseObj, issues);
+    return { issues: issues, passes: buildPasses(issues, r04notes, caseObj) };
+  }
+
+  function evaluateR01(caseObj, issues) {
+    TYPE_ORDER.forEach(function (type) {
+      if (!materialByType(caseObj, type)) {
+        issues.push(makeIssue({
+          key: "R01|missing|" + type,
+          ruleId: "R01",
+          title: "缺少" + TYPE_LABEL[type],
+          summary: "当前卷内没有" + TYPE_LABEL[type] + "。",
+          explanation: "演示规则把这一类当作必备材料。没有它，相关比对不能完成，系统也不会用其他材料代替。" + NOT_A_DECISION,
+          evidence: [{ missing: true, type: type, materialId: null, versionId: null, anchors: [], label: TYPE_LABEL[type], originalText: "材料清单中没有当前版本" }]
+        }));
+      }
+    });
+  }
+
+  function evaluateR02(caseObj, issues) {
+    caseObj.materials.forEach(function (material) {
+      var version = currentVersion(material);
+      var bad = [];
+      FIELD_DEFS[material.type].forEach(function (def) {
+        if (!def.required || def.kind === "transactions") return;
+        var field = version.fields[def.key];
+        if (!field || field.current == null) {
+          bad.push({ key: def.key, label: def.label, sourceStatus: field ? field.sourceStatus : "missing" });
+        }
+      });
+      if (material.type === "statement" && Array.isArray(readCurrent(version, "transactions"))) {
+        readCurrent(version, "transactions").forEach(function (txn, index) {
+          if (txn.readable === false || txn.amountCents == null) {
+            bad.push({ key: "txn-" + index, label: "交易 " + (index + 1), sourceStatus: "unreadable" });
+          }
+        });
+      }
+      if (!bad.length) return;
+      issues.push(makeIssue({
+        key: "R02|unknown|" + material.id,
+        ruleId: "R02",
+        title: TYPE_LABEL[material.type] + "有未知或不可读字段",
+        summary: bad.map(function (item) { return item.label; }).join("、") + " 仍为空。",
+        explanation: "这些位置保持未知，规则不填猜测值，也不给置信度。" + NOT_A_DECISION,
+        evidence: [{
+          materialId: material.id,
+          versionId: version.id,
+          type: material.type,
+          label: TYPE_LABEL[material.type],
+          anchors: bad.map(function (item) { return item.key; }),
+          originalText: bad.map(function (item) {
+            return item.label + "：" + (blockText(version, item.key) || "（空）");
+          }).join("；"),
+          fields: bad
+        }]
+      }));
+    });
+  }
+
+  function evaluateR03(caseObj, issues) {
+    compareSlots(caseObj, issues, NAME_SLOTS, "name", "R03|name", "跨材料姓名不一致", normalizeName);
+    compareSlots(caseObj, issues, ID_SLOTS, "id", "R03|mockId", "跨材料模拟证件号不一致", normalizeId);
+  }
+
+  function compareSlots(caseObj, issues, slots, kind, key, title, normalize) {
+    var rows = [];
+    slots.forEach(function (slot) {
+      var material = materialByType(caseObj, slot[0]);
+      if (!material) return;
+      var version = currentVersion(material);
+      var current = readCurrent(version, slot[1]);
+      if (current == null) return;
+      rows.push({
+        evidence: fieldEvidence(material, version, slot[1], slot[2]),
+        normalized: normalize(current)
+      });
+    });
+    if (rows.length < 2) return;
+    var first = rows[0].normalized;
+    var conflict = rows.some(function (row) { return row.normalized !== first; });
+    if (!conflict) return;
+    issues.push(makeIssue({
+      key: key,
+      ruleId: "R03",
+      title: title,
+      summary: rows.map(function (row) {
+        return row.evidence.label + "原文「" + displayRaw(kind, row.evidence.current) + "」归一「" + row.normalized + "」";
+      }).join("；") + "。",
+      explanation: "比较使用归一结果，原文照录。归一后不同，只进入复核说明。" + NOT_A_DECISION,
+      evidence: rows.map(function (row) { return row.evidence; })
+    }));
+  }
+
+  function evaluateR04(caseObj, issues, notes) {
+    var baseline = parseISODate(BASELINE_DATE);
+    checkIdentityWindow(caseObj, issues, notes, baseline);
+    checkOffset(caseObj, issues, notes, baseline, "application", "applicationDate", "申请日期", "R04|application-date", 30, "申请日");
+    checkOffset(caseObj, issues, notes, baseline, "income", "issueDate", "开具日期", "R04|income-issue-date", 90, "收入证明开具日");
+    checkStatementCoverage(caseObj, issues, notes, baseline);
+    checkPeriodEquality(caseObj, issues, notes);
+  }
+
+  function checkIdentityWindow(caseObj, issues, notes, baseline) {
+    var material = materialByType(caseObj, "identity");
+    if (!material) return;
+    var version = currentVersion(material);
+    var rawFrom = readCurrent(version, "validFrom");
+    var rawTo = readCurrent(version, "validTo");
+    if (rawFrom == null || rawTo == null) {
+      notes.push("身份证明有效期有空值，R04 不补判。");
+      return;
+    }
+    var from = parseISODate(rawFrom);
+    var to = parseISODate(rawTo);
+    if (!from || !to) {
+      issues.push(dateIssue("R04|identity-window", "身份证明有效期无法解析", material, version, ["validFrom", "validTo"]));
+      return;
+    }
+    if (from.utc > baseline.utc || to.utc < baseline.utc) {
+      issues.push(makeIssue({
+        key: "R04|identity-window",
+        ruleId: "R04",
+        title: "身份证明有效期未覆盖基准日",
+        summary: "有效期 " + rawFrom + " 至 " + rawTo + "，基准日 " + BASELINE_DATE + "。",
+        explanation: "演示规则要求有效期起早于或等于基准日，有效期止晚于或等于基准日。" + NOT_A_DECISION,
+        evidence: [fieldEvidence(material, version, "validFrom", "有效期起"), fieldEvidence(material, version, "validTo", "有效期止")]
+      }));
+      return;
+    }
+    notes.push("身份证明有效期覆盖基准日。");
+  }
+
+  function checkOffset(caseObj, issues, notes, baseline, type, key, label, issueKey, maxDays, name) {
+    var material = materialByType(caseObj, type);
+    if (!material) return;
+    var version = currentVersion(material);
+    var raw = readCurrent(version, key);
+    if (raw == null) {
+      notes.push(label + "为空，R04 不补判。");
+      return;
+    }
+    var date = parseISODate(raw);
+    if (!date) {
+      issues.push(dateIssue(issueKey, label + "无法解析", material, version, [key]));
+      return;
+    }
+    var gap = daysBetween(date, baseline);
+    if (gap < 0 || gap > maxDays) {
+      issues.push(makeIssue({
+        key: issueKey,
+        ruleId: "R04",
+        title: name + "不在演示窗口内",
+        summary: raw + " 距基准日 " + gap + " 天，窗口为 0 到 " + maxDays + " 天。",
+        explanation: "日期窗口是写明的演示口径，不是银行时效政策。" + NOT_A_DECISION,
+        evidence: [fieldEvidence(material, version, key, label)]
+      }));
+      return;
+    }
+    notes.push(name + "在窗口内（距基准日 " + gap + " 天）。");
+  }
+
+  function checkStatementCoverage(caseObj, issues, notes, baseline) {
+    var material = materialByType(caseObj, "statement");
+    if (!material) return;
+    var version = currentVersion(material);
+    var start = readCurrent(version, "periodStart");
+    var end = readCurrent(version, "periodEnd");
+    if (start == null || end == null) {
+      notes.push("流水期间有空值，R04 不补判。");
+      return;
+    }
+    var span = analyzeFullMonths(start, end);
+    if (!span.ok) {
+      issues.push(makeIssue({
+        key: "R04|statement-coverage",
+        ruleId: "R04",
+        title: "流水期间不是足够的完整自然月",
+        summary: span.reason + "。",
+        explanation: "演示规则要求至少 3 个完整自然月，不用天数近似去凑。" + NOT_A_DECISION,
+        evidence: [fieldEvidence(material, version, "periodStart", "流水期间起"), fieldEvidence(material, version, "periodEnd", "流水期间止")]
+      }));
+      return;
+    }
+    if (span.months < 3) {
+      issues.push(makeIssue({
+        key: "R04|statement-coverage",
+        ruleId: "R04",
+        title: "流水完整月数不足",
+        summary: "完整自然月为 " + span.months + "，演示规则要求至少 3 个月。",
+        explanation: NOT_A_DECISION,
+        evidence: [fieldEvidence(material, version, "periodStart", "流水期间起"), fieldEvidence(material, version, "periodEnd", "流水期间止")]
+      }));
+      return;
+    }
+    var gap = daysBetween(span.end, baseline);
+    if (gap < 0 || gap > 31) {
+      issues.push(makeIssue({
+        key: "R04|statement-coverage",
+        ruleId: "R04",
+        title: "流水止日不在演示窗口内",
+        summary: end + " 距基准日 " + gap + " 天，窗口为 0 到 31 天。",
+        explanation: NOT_A_DECISION,
+        evidence: [fieldEvidence(material, version, "periodEnd", "流水期间止")]
+      }));
+      return;
+    }
+    notes.push("流水覆盖 " + span.months + " 个完整自然月，止日距基准日 " + gap + " 天。");
+  }
+
+  function checkPeriodEquality(caseObj, issues, notes) {
+    var income = materialByType(caseObj, "income");
+    var statement = materialByType(caseObj, "statement");
+    if (!income || !statement) {
+      notes.push("收入证明或流水不在卷，期间是否相同不另判。");
+      return;
+    }
+    var iv = currentVersion(income);
+    var sv = currentVersion(statement);
+    var a0 = readCurrent(iv, "periodStart");
+    var a1 = readCurrent(iv, "periodEnd");
+    var b0 = readCurrent(sv, "periodStart");
+    var b1 = readCurrent(sv, "periodEnd");
+    if (a0 == null || a1 == null || b0 == null || b1 == null) {
+      notes.push("有期间为空，R04 不把另一份材料的期间抄过去。");
+      return;
+    }
+    if (a0 !== b0 || a1 !== b1) {
+      issues.push(makeIssue({
+        key: "R04|period-mismatch",
+        ruleId: "R04",
+        title: "收入期间与流水期间不同",
+        summary: "收入证明 " + a0 + " 至 " + a1 + "，流水 " + b0 + " 至 " + b1 + "。",
+        explanation: "两边都有明确日期但不相同时，不能当成同一口径。" + NOT_A_DECISION,
+        evidence: [
+          fieldEvidence(income, iv, "periodStart", "收入期间起"),
+          fieldEvidence(income, iv, "periodEnd", "收入期间止"),
+          fieldEvidence(statement, sv, "periodStart", "流水期间起"),
+          fieldEvidence(statement, sv, "periodEnd", "流水期间止")
+        ]
+      }));
+      return;
+    }
+    notes.push("收入证明期间与流水期间相同。");
+  }
+
+  function dateIssue(key, title, material, version, anchors) {
+    return makeIssue({
+      key: key,
+      ruleId: "R04",
+      title: title,
+      summary: "字段里的日期文本不能按公历解析。",
+      explanation: "无法解析时不推测一个相近日期。" + NOT_A_DECISION,
+      evidence: anchors.map(function (anchor) {
+        return fieldEvidence(material, version, anchor, anchor);
+      })
+    });
+  }
+
+  function evaluateR05(caseObj, issues) {
+    var statement = materialByType(caseObj, "statement");
+    var application = materialByType(caseObj, "application");
+    var income = materialByType(caseObj, "income");
+    if (!statement) {
+      issues.push(makeIssue({
+        key: "R05|compare-incomplete",
+        ruleId: "R05",
+        title: "没有流水，月收入比对未做",
+        summary: "缺少账户流水，不编造工资入账。",
+        explanation: NOT_A_DECISION,
+        evidence: [{ missing: true, type: "statement", materialId: null, versionId: null, anchors: [], label: "账户流水" }]
+      }));
+      return;
+    }
+    var calc = buildCalculation(caseObj);
+    if (calc.unclear.length) {
+      issues.push(r05Issue("R05|unclear-inclusion", "有交易不能确认是否计入工资", "类别未知或金额不可读的交易没有计入，也没有被悄悄忽略。", calc));
+      return;
+    }
+    if (!calc.fullMonths) {
+      issues.push(r05Issue("R05|compare-incomplete", "流水期间不能用来算月均", calc.spanReason || "期间不完整。", calc));
+      return;
+    }
+    var differed = calc.pairs.some(function (pair) { return pair.comparable && pair.diffCents !== 0; });
+    if (differed) {
+      issues.push(r05Issue("R05|amount-diff", "月收入数字不一致", "同一演示口径下，可比的月金额差额不为 0 分。", calc));
+      return;
+    }
+    var incomeMonthly = income ? readCurrent(currentVersion(income), "monthlyIncomeCents") : null;
+    if (!income || incomeMonthly == null || !application || readCurrent(currentVersion(application), "declaredMonthlyIncomeCents") == null) {
+      issues.push(r05Issue("R05|compare-incomplete", "月收入比对未完成", "有一侧月金额不在卷或仍为空，规则不把它当成 0，也不补写。", calc));
+    }
+  }
+
+  function r05Issue(key, title, summary, calc) {
+    return makeIssue({
+      key: key,
+      ruleId: "R05",
+      title: title,
+      summary: summary,
+      explanation: explainR05(calc),
+      evidence: calc.evidence,
+      calculation: calc
+    });
+  }
+
+  function explainR05(calc) {
+    var text = "口径：完整自然月内类别为工资入账且金额可读的交易，合计后按月数做整数分向下取整。申报月收入和收入证明月收入按各自文件上的每月金额读取。";
+    if (calc.samePeriod === true) text += "收入证明期间与流水期间相同。";
+    if (calc.samePeriod === false) text += "收入证明期间与流水期间不同。差额只说明各文件上的月金额数字不同，不能说成已经坐实的同一期间冲突。";
+    if (calc.samePeriod == null) text += "至少一侧期间未知或材料不在卷。规则不补写期间。";
+    return text + NOT_A_DECISION;
+  }
+
+  function buildCalculation(caseObj) {
+    var statementMat = materialByType(caseObj, "statement");
+    var applicationMat = materialByType(caseObj, "application");
+    var incomeMat = materialByType(caseObj, "income");
+    var statement = statementMat ? currentVersion(statementMat) : null;
+    var application = applicationMat ? currentVersion(applicationMat) : null;
+    var income = incomeMat ? currentVersion(incomeMat) : null;
+    var txns = statement ? (readCurrent(statement, "transactions") || []) : [];
+    var span = statement ? analyzeFullMonths(readCurrent(statement, "periodStart"), readCurrent(statement, "periodEnd")) : { ok: false, reason: "无流水" };
+    var included = [];
+    var excluded = [];
+    var unclear = [];
+    txns.forEach(function (txn, index) {
+      var item = {
+        anchor: "txn-" + index,
+        date: txn.date,
+        category: txn.category,
+        amountCents: txn.amountCents,
+        summary: txn.summary,
+        readable: txn.readable !== false && txn.amountCents != null
+      };
+      if (!item.readable) {
+        item.reason = "不可读，未计入";
+        unclear.push(item);
+        return;
+      }
+      if (txn.category === "salary") included.push(item);
+      else if (txn.category === "bonus" || txn.category === "transfer" || txn.category === "refund") {
+        item.reason = categoryLabel(txn.category) + "，演示规则不计入工资";
+        excluded.push(item);
+      } else {
+        item.reason = "类别未知，未计入";
+        unclear.push(item);
+      }
+    });
+    var total = 0;
+    included.forEach(function (item) { total += item.amountCents; });
+    var months = span.ok ? span.months : null;
+    var declared = application ? readCurrent(application, "declaredMonthlyIncomeCents") : null;
+    var incomeMonthly = income ? readCurrent(income, "monthlyIncomeCents") : null;
+    var incomeStart = income ? readCurrent(income, "periodStart") : null;
+    var incomeEnd = income ? readCurrent(income, "periodEnd") : null;
+    var statementStart = statement ? readCurrent(statement, "periodStart") : null;
+    var statementEnd = statement ? readCurrent(statement, "periodEnd") : null;
+    var samePeriod = null;
+    if (income && statement && incomeStart != null && incomeEnd != null && statementStart != null && statementEnd != null) {
+      samePeriod = incomeStart === statementStart && incomeEnd === statementEnd;
+    }
+    var average = months ? Math.floor(total / months) : null;
+    var remainder = months ? total % months : null;
+    var evidence = [];
+    if (application) evidence.push(fieldEvidence(applicationMat, application, "declaredMonthlyIncomeCents", "申报月收入"));
+    if (income) evidence.push(fieldEvidence(incomeMat, income, "monthlyIncomeCents", "收入证明月收入"));
+    if (statement) {
+      evidence.push({
+        materialId: statementMat.id,
+        versionId: statement.id,
+        type: "statement",
+        label: "计入的工资入账",
+        anchors: included.map(function (item) { return item.anchor; }).concat(unclear.map(function (item) { return item.anchor; })),
+        originalText: included.map(function (item) { return blockText(statement, item.anchor); }).filter(Boolean).join("；"),
+        extracted: total,
+        current: total,
+        normalized: null
+      });
+    }
+    return {
+      basis: "仅计入 category=salary 且金额可读的交易；月均 = 合计 ÷ 完整自然月数，整数分向下取整",
+      periodStart: statementStart,
+      periodEnd: statementEnd,
+      months: months,
+      fullMonths: !!span.ok,
+      spanReason: span.ok ? "" : span.reason,
+      incomePeriodStart: incomeStart,
+      incomePeriodEnd: incomeEnd,
+      samePeriod: samePeriod,
+      salaryCount: included.length,
+      salaryTotalCents: total,
+      averageCents: average,
+      remainderCents: remainder,
+      declaredCents: declared,
+      incomeMonthlyCents: incomeMonthly,
+      pairs: [
+        makePair("申报月收入", declared, "工资月均", average),
+        makePair("申报月收入", declared, "收入证明月收入", incomeMonthly),
+        makePair("收入证明月收入", incomeMonthly, "工资月均", average)
+      ],
+      included: included,
+      excluded: excluded,
+      unclear: unclear,
+      evidence: evidence
+    };
+  }
+
+  function makePair(left, leftCents, right, rightCents) {
+    if (leftCents == null || rightCents == null) {
+      return { left: left, right: right, leftCents: leftCents, rightCents: rightCents, diffCents: null, comparable: false };
+    }
+    return { left: left, right: right, leftCents: leftCents, rightCents: rightCents, diffCents: leftCents - rightCents, comparable: true };
+  }
+
+  function evaluateR06(caseObj, issues) {
+    caseObj.materials.forEach(function (material) {
+      var version = currentVersion(material);
+      if (version.extractionQuality !== "uncertain" && version.extractionQuality !== "unreadable") return;
+      issues.push(makeIssue({
+        key: "R06|quality|" + material.id,
+        ruleId: "R06",
+        title: TYPE_LABEL[material.type] + "来源标记为不确定",
+        summary: "版本 " + version.label + " 的抽取质量是 " + version.extractionQuality + "。",
+        explanation: "这是样本上的演示标记，不是模型分数。需要人工看原文。" + NOT_A_DECISION,
+        evidence: [{
+          materialId: material.id,
+          versionId: version.id,
+          type: material.type,
+          label: TYPE_LABEL[material.type],
+          anchors: [],
+          originalText: version.extractionNote,
+          quality: version.extractionQuality
+        }]
+      }));
+    });
+  }
+
+  function buildPasses(issues, r04notes, caseObj) {
+    var passes = [];
+    function has(ruleId) {
+      return issues.some(function (issue) { return issue.ruleId === ruleId; });
+    }
+    if (!has("R01")) passes.push({ ruleId: "R01", title: "必备材料齐全", summary: "申请书、模拟身份证明、收入证明、账户流水都有当前版本。", calculation: null });
+    if (!has("R02")) passes.push({ ruleId: "R02", title: "必填字段都有当前值", summary: "当前版本的必填字段没有留空，也没有不可读交易。空值没有被填上。", calculation: null });
+    if (!has("R03")) passes.push({ ruleId: "R03", title: "姓名与模拟证件号归一后一致", summary: "在场材料的姓名、模拟证件号经过归一后各自相同。原文仍可在字段里查看。", calculation: null });
+    if (!has("R04")) passes.push({ ruleId: "R04", title: "日期与覆盖符合演示窗口", summary: r04notes.join(""), calculation: null });
+    if (!has("R05")) {
+      var calc = buildCalculation(caseObj);
+      passes.push({ ruleId: "R05", title: "可比的月收入数字一致", summary: "可比两侧的整数分差额为 0。未计入的交易见计算。", calculation: calc });
+    }
+    if (!has("R06")) passes.push({ ruleId: "R06", title: "当前版本没有不确定来源标记", summary: "没有材料被标成不确定或不可读。本规则不产生置信度。", calculation: null });
+    return passes;
+  }
+
+  function mergeIssues(prev, next, at) {
+    var prevMap = {};
+    prev.forEach(function (issue) { prevMap[issue.key] = issue; });
+    var used = {};
+    var out = [];
+    var reopened = [];
+    var superseded = [];
+    next.forEach(function (item) {
+      used[item.key] = true;
+      var old = prevMap[item.key];
+      if (!old) {
+        out.push(Object.assign({}, item, { openedAt: at }));
+        return;
+      }
+      if (old.status === "superseded") {
+        reopened.push(item.title);
+        out.push(Object.assign({}, item, {
+          openedAt: at,
+          priorResolution: old.resolution || old.priorResolution || null,
+          trail: old.trail.concat([{ at: at, type: "reopened", summary: "该事项再次出现。" }])
+        }));
+        return;
+      }
+      if (old.fingerprint === item.fingerprint && (old.status === "resolved" || old.status === "open")) {
+        out.push(old);
+        return;
+      }
+      if (old.status === "resolved" && old.fingerprint !== item.fingerprint) {
+        reopened.push(item.title);
+        out.push(Object.assign({}, item, {
+          openedAt: old.openedAt || at,
+          priorResolution: old.resolution,
+          trail: old.trail.concat([{ at: at, type: "reopened", summary: "证据或规则结果已变化，原复核结论不再沿用。" }])
+        }));
+        return;
+      }
+      out.push(Object.assign({}, item, {
+        openedAt: old.openedAt || at,
+        priorResolution: old.priorResolution || null,
+        trail: old.trail.concat([{ at: at, type: "evidence-updated", summary: "重新计算后，引用的证据已更新。" }])
+      }));
+    });
+    prev.forEach(function (old) {
+      if (used[old.key]) return;
+      if (old.status === "superseded") {
+        out.push(old);
+        return;
+      }
+      superseded.push(old.title);
+      out.push(Object.assign({}, old, {
+        status: "superseded",
+        supersededAt: at,
+        trail: old.trail.concat([{ at: at, type: "superseded", summary: "当前规则结果已不再包含此项，记录保留。" }])
+      }));
+    });
+    return { issues: out, reopened: reopened, superseded: superseded };
+  }
+
+  function deriveStatus(caseObj) {
+    var open = caseObj.issues.filter(function (issue) { return issue.status === "open" && issue.blocking; });
+    if (caseObj.completedAt && open.length === 0) return "completed";
+    if (open.some(function (issue) { return issue.ruleId === "R01"; })) return "pending-supplement";
+    if (open.length) return "pending-review";
+    return "pending-report";
+  }
+
+  function describeCase(caseObj) {
+    var open = caseObj.issues.filter(function (issue) { return issue.status === "open" && issue.blocking; });
+    var missing = open.filter(function (issue) { return issue.ruleId === "R01"; });
+    var others = open.filter(function (issue) { return issue.ruleId !== "R01"; });
+    var status = deriveStatus(caseObj);
+    var headline = "当前没有未决关键事项";
+    var detail = "按现有材料和规则，关键事项已经清空，仍需人工确认后才算完成。";
+    if (status === "completed") {
+      headline = "预审已完成";
+      detail = "当前没有未决关键事项，复核人已确认完成这次材料预审。";
+    } else if (missing.length) {
+      headline = missing.map(function (issue) { return issue.title; }).join("、");
+      detail = "当前卷内没有：" + missing.map(function (issue) {
+        return issue.title.indexOf("缺少") === 0 ? issue.title.slice(2) : issue.title;
+      }).join("、") + "。";
+      if (others.length) detail += "另外待说明：" + others.map(function (issue) { return issue.title; }).join("、") + "。";
+    } else if (open.length === 1) {
+      headline = open[0].title;
+      detail = "当前待说明：" + open[0].title + "。";
+    } else if (open.length > 1) {
+      headline = "待说明 " + open.length + " 项";
+      detail = "当前待说明：" + open.map(function (issue) { return issue.title; }).join("、") + "。";
+    }
+    return {
+      headline: headline,
+      detail: detail,
+      initialTitle: caseObj.initialTitle,
+      initialSummary: caseObj.initialSummary
+    };
+  }
+
+  function pushEvent(caseObj, at, actor, type, summary, detail) {
+    caseObj.events.push({
+      id: "evt-" + (caseObj.events.length + 1),
+      at: at,
+      actor: actor,
+      type: type,
+      summary: summary,
+      detail: detail || ""
+    });
+  }
+
+  function clearCompletion(caseObj, at, actor, detail) {
+    if (!caseObj.completedAt) return;
+    pushEvent(caseObj, at, actor, "completion-invalidated", "完成后材料又有变动，预审重新打开。", detail);
+    caseObj.completedAt = null;
+    caseObj.completionActor = null;
+    caseObj.humanConfirmed = false;
+  }
+
+  function recheck(caseObj, at) {
+    var c = clone(caseObj);
+    var evaluated = evaluate(c);
+    var merged = mergeIssues(c.issues, evaluated.issues, at);
+    c.issues = merged.issues;
+    c.passes = evaluated.passes;
+    c.lastCheckedAt = at;
+    if (merged.reopened.length) {
+      pushEvent(c, at, "规则引擎", "issue-reopened", "有事项重新打开", merged.reopened.join("、"));
+    }
+    if (merged.superseded.length) {
+      pushEvent(c, at, "规则引擎", "issue-superseded", "有事项被新的结果取代", merged.superseded.join("、"));
+    }
+    return c;
+  }
+
+  function requireReason(reason, message) {
+    var text = String(reason || "").trim();
+    if (text.length < 4) return { ok: false, error: message };
+    return { ok: true, text: text };
+  }
+
+  function correctField(caseObj, input) {
+    var reason = requireReason(input.reason, "请填写至少 4 个字的更正理由。");
+    if (!reason.ok) return reason;
+    if (!String(input.actor || "").trim()) return { ok: false, error: "缺少复核人。" };
+    var c = clone(caseObj);
+    var material = c.materials.filter(function (item) { return item.id === input.materialId; })[0];
+    if (!material) return { ok: false, error: "没有这份材料。" };
+    var version = currentVersion(material);
+    if (input.versionId && input.versionId !== version.id) return { ok: false, error: "只能更正当前版本。历史版本保持原样。" };
+    var def = (FIELD_DEFS[material.type] || []).filter(function (item) { return item.key === input.fieldKey; })[0];
+    if (!def) return { ok: false, error: "没有这个字段。" };
+    if (def.kind === "transactions") return { ok: false, error: "交易明细不能逐笔猜测。请用内部样本替换整份流水。" };
+    var parsed = coerce(def.kind, input.newValue);
+    if (!parsed.ok) return parsed;
+    var field = version.fields[def.key];
+    if (field.current === parsed.value) return { ok: false, error: "新值与当前值相同，没有写入。" };
+    field.corrections.push({ at: input.at, actor: input.actor, from: field.current, to: parsed.value, reason: reason.text });
+    field.current = parsed.value;
+    clearCompletion(c, input.at, input.actor, reason.text);
+    pushEvent(c, input.at, input.actor, "field-corrected", "更正" + TYPE_LABEL[material.type] + " · " + def.label, displayRaw(def.kind, field.corrections[field.corrections.length - 1].from) + " → " + displayRaw(def.kind, parsed.value) + "。理由：" + reason.text);
+    return { ok: true, case: recheck(c, input.at) };
+  }
+
+  function coerce(kind, raw) {
+    if (kind === "cents") {
+      var cents = parseYuanToCents(raw);
+      if (cents == null) return { ok: false, error: "金额请写成元，最多两位小数，例如 15000.01。不接受科学计数法。" };
+      return { ok: true, value: cents };
+    }
+    if (kind === "date") {
+      var dateText = String(raw == null ? "" : raw).trim();
+      if (!parseISODate(dateText)) return { ok: false, error: "日期请写成 YYYY-MM-DD，并且是真实存在的日期。" };
+      return { ok: true, value: dateText };
+    }
+    var text = String(raw == null ? "" : raw).trim();
+    if (!text) return { ok: false, error: "不能提交空值。未知字段会保持为空，直到有明确的人工更正。" };
+    if (text.length > 40) return { ok: false, error: "不超过 40 个字。" };
+    if (/[\r\n]/.test(text)) return { ok: false, error: "不能包含换行。" };
+    return { ok: true, value: text };
+  }
+
+  function addMaterialVersion(caseObj, input) {
+    var reason = requireReason(input.reason, "补充或替换需要至少 4 个字的理由。");
+    if (!reason.ok) return reason;
+    if (!String(input.actor || "").trim()) return { ok: false, error: "缺少复核人。" };
+    var c = clone(caseObj);
+    var preset = (c.presets || []).filter(function (item) { return item.id === input.presetId; })[0];
+    if (!preset) return { ok: false, error: "没有这份内部样本。" };
+    var material = materialByType(c, preset.type);
+    var isNew = !material;
+    if (!material) {
+      material = { id: c.id + "-" + preset.type, type: preset.type, versions: [] };
+      c.materials.push(material);
+    }
+    var version = clone(preset.version);
+    version.id = material.id + "-v" + (material.versions.length + 1);
+    version.label = preset.label;
+    version.origin = isNew ? "supplement" : "replacement";
+    version.addedAt = input.at;
+    version.addedBy = input.actor;
+    version.reason = reason.text;
+    version.supersededAt = null;
+    if (material.versions.length) material.versions[material.versions.length - 1].supersededAt = input.at;
+    material.versions.push(version);
+    clearCompletion(c, input.at, input.actor, reason.text);
+    pushEvent(c, input.at, input.actor, isNew ? "material-supplemented" : "material-replaced", (isNew ? "补充" : "替换") + TYPE_LABEL[preset.type], preset.label + "。理由：" + reason.text);
+    var checked = recheck(c, input.at);
+    return { ok: true, case: checked, materialId: material.id, versionId: version.id };
+  }
+
+  function resolveIssue(caseObj, input) {
+    var reason = requireReason(input.reason, "请填写至少 4 个字的复核理由。");
+    if (!reason.ok) return reason;
+    if (input.acknowledged !== true) return { ok: false, error: "请勾选确认：这是人工复核记录，没有猜测未知数值，也不是贷款结论。" };
+    if (!String(input.actor || "").trim()) return { ok: false, error: "缺少复核人。" };
+    var c = clone(caseObj);
+    var issue = c.issues.filter(function (item) { return item.key === input.key; })[0];
+    if (!issue || issue.status !== "open") return { ok: false, error: "这项不是未决事项。" };
+    issue.status = "resolved";
+    issue.resolution = {
+      at: input.at,
+      actor: input.actor,
+      reason: reason.text,
+      acknowledged: true,
+      evidenceVersionIds: issue.evidence.map(function (item) { return item.versionId || null; }),
+      statement: "人工复核记录。未知字段若仍为空，本操作没有填入数值。"
+    };
+    issue.trail.push({ at: input.at, type: "resolved", summary: "已记录复核结论。" });
+    pushEvent(c, input.at, input.actor, "issue-resolved", "记录复核结论：" + issue.title, reason.text);
+    var checked = recheck(c, input.at);
+    var after = checked.issues.filter(function (item) { return item.key === input.key; })[0];
+    if (!after || after.status !== "resolved") return { ok: false, error: "复核结论未能保留。证据可能已经变化。" };
+    return { ok: true, case: checked };
+  }
+
+  function completeCase(caseObj, input) {
+    if (input.humanConfirmed !== true) return { ok: false, error: "需要明确的人工确认。材料齐全的案件也不会自动完成。" };
+    if (!String(input.actor || "").trim()) return { ok: false, error: "缺少复核人。" };
+    var c = clone(caseObj);
+    var open = c.issues.filter(function (issue) { return issue.status === "open" && issue.blocking; });
+    if (open.length) return { ok: false, error: "还有 " + open.length + " 项未决关键事项，不能完成。可以先导出草稿报告。" };
+    c.humanConfirmed = true;
+    c.completedAt = input.at;
+    c.completionActor = input.actor;
+    pushEvent(c, input.at, input.actor, "completed", "复核人确认材料预审演示完成", "确认范围只到材料预审，不包括贷款审批、额度、利率或征信。");
+    return { ok: true, case: c };
+  }
+
+  function recordExport(caseObj, input) {
+    var c = clone(caseObj);
+    pushEvent(c, input.at, input.actor, "export", input.kind === "json" ? "导出 JSON 状态快照" : "导出 TXT 报告", "本地文件，不是正式文书。");
+    return c;
+  }
+
+  function resetCase(caseId) {
+    return createInitialState().cases.filter(function (item) { return item.id === caseId; })[0];
+  }
+
+  function formatTime(iso) {
+    var date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return String(iso || "");
+    var fmt = new Intl.DateTimeFormat("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+    return fmt.format(date) + "（" + iso + "）";
+  }
+
+  function formatCalculationLines(calc) {
+    if (!calc) return [];
+    var lines = [
+      "口径：" + calc.basis,
+      "流水期间：" + (calc.periodStart || "（空）") + " 至 " + (calc.periodEnd || "（空）") + (calc.fullMonths ? "，完整自然月 " + calc.months + " 个" : "，不能按完整自然月计算"),
+      "收入证明期间：" + (calc.incomePeriodStart || "（空）") + " 至 " + (calc.incomePeriodEnd || "（空）"),
+      "期间是否相同：" + (calc.samePeriod === true ? "相同" : calc.samePeriod === false ? "不相同" : "无法确认"),
+      "工资入账笔数：" + calc.salaryCount,
+      "工资入账合计：" + formatCents(calc.salaryTotalCents) + " 元（" + calc.salaryTotalCents + " 分）",
+      "月均整数：" + (calc.averageCents == null ? "—" : formatCents(calc.averageCents) + " 元（" + calc.averageCents + " 分）"),
+      "余数：" + (calc.remainderCents == null ? "—" : calc.remainderCents + " 分，未并入月均"),
+      "申报月收入：" + (calc.declaredCents == null ? "（空）" : formatCents(calc.declaredCents) + " 元（" + calc.declaredCents + " 分）"),
+      "收入证明月收入：" + (calc.incomeMonthlyCents == null ? "（空）" : formatCents(calc.incomeMonthlyCents) + " 元（" + calc.incomeMonthlyCents + " 分）")
+    ];
+    calc.pairs.forEach(function (pair) {
+      lines.push(pair.left + " − " + pair.right + "：" + (pair.comparable ? formatCents(pair.diffCents) + " 元（" + pair.diffCents + " 分）" : "无法比较"));
+    });
+    calc.included.forEach(function (item) {
+      lines.push("计入 " + item.date + " " + formatCents(item.amountCents) + " 元 " + item.summary);
+    });
+    calc.excluded.forEach(function (item) {
+      lines.push("不计入 " + item.date + " " + categoryLabel(item.category) + " " + formatCents(item.amountCents) + " 元 " + item.summary);
+    });
+    calc.unclear.forEach(function (item) {
+      lines.push("不能确认 " + (item.date || "") + " " + (item.reason || ""));
+    });
+    return lines;
+  }
+
+  function originLabel(origin) {
+    if (origin === "supplement") return "补充";
+    if (origin === "replacement") return "替换";
+    return "原始样本";
+  }
+
+  function buildReportText(caseObj, meta) {
+    var status = deriveStatus(caseObj);
+    var lines = [
+      "个人消费贷款材料预审演示报告",
+      caseObj.completedAt ? "文本状态：已完成预审后的导出" : "文本状态：草稿（允许在未完成时导出）",
+      "",
+      DISCLOSURE,
+      "",
+      "本报告不构成贷款审批，不判断真实性、欺诈、信用或可贷性，也不给出额度、利率、通过或拒绝。",
+      "规则版本：" + RULE_VERSION,
+      "基准日：" + BASELINE_DATE,
+      "规则是演示口径，不是银行制度，来源口径未作法律合规核验。",
+      "字段来自内置样本直读，是模拟抽取，不是 OCR，没有置信度百分比。",
+      "本地历程不是防篡改审计。",
+      "",
+      "案件编号：" + caseObj.id,
+      "申请人：" + caseObj.applicant,
+      "当前说明：" + describeCase(caseObj).headline + "。" + describeCase(caseObj).detail,
+      "初始场景：" + caseObj.initialTitle + "。" + caseObj.initialSummary,
+      "案件状态：" + STATE_LABEL[status],
+      "复核人：" + (meta.reviewerName || ""),
+      "生成时间：" + formatTime(meta.exportedAt),
+      "人工确认：" + (caseObj.humanConfirmed && caseObj.completedAt ? "已于 " + formatTime(caseObj.completedAt) + " 由 " + (caseObj.completionActor || "") + " 确认" : "尚未确认"),
+      "",
+      "一、材料版本"
+    ];
+    TYPE_ORDER.forEach(function (type) {
+      var material = materialByType(caseObj, type);
+      if (!material) {
+        lines.push(TYPE_LABEL[type] + "：不在卷");
+        return;
+      }
+      material.versions.forEach(function (version, index) {
+        lines.push(TYPE_LABEL[type] + " 版本 " + (index + 1) + " " + version.id + " · " + originLabel(version.origin) + (version.supersededAt ? " · 已被后续版本取代" : " · 当前版本"));
+        lines.push("  加入时间：" + formatTime(version.addedAt) + " 操作者：" + version.addedBy);
+        lines.push("  理由：" + version.reason);
+        lines.push("  抽取说明：" + version.extractionNote + " 质量标记：" + version.extractionQuality);
+        FIELD_DEFS[type].forEach(function (def) {
+          if (def.kind === "transactions") {
+            var txns = version.fields.transactions.current || [];
+            lines.push("  交易明细当前 " + txns.length + " 笔；抽取原值 " + (version.fields.transactions.extracted || []).length + " 笔");
+            txns.forEach(function (txn) {
+              lines.push("    " + txn.date + " " + categoryLabel(txn.category) + " " + (txn.amountCents == null ? "（空）" : formatCents(txn.amountCents) + " 元") + " " + txn.summary);
+            });
+            return;
+          }
+          var field = version.fields[def.key];
+          lines.push("  " + def.label + " 抽取原值：" + displayRaw(def.kind, field.extracted) + " 当前值：" + displayRaw(def.kind, field.current) + " 来源标记：" + field.sourceStatus);
+          field.corrections.forEach(function (item) {
+            lines.push("    更正 " + formatTime(item.at) + " " + item.actor + " " + displayRaw(def.kind, item.from) + " → " + displayRaw(def.kind, item.to) + " 理由：" + item.reason);
+          });
+        });
+      });
+    });
+    lines.push("", "二、规则结果与计算");
+    caseObj.passes.forEach(function (pass) {
+      lines.push(pass.ruleId + " 通过 · " + pass.title);
+      lines.push("  " + pass.summary);
+      formatCalculationLines(pass.calculation).forEach(function (line) { lines.push("  " + line); });
+    });
+    caseObj.issues.forEach(function (issue) {
+      lines.push(issue.ruleId + " " + issue.status + " · " + issue.title);
+      lines.push("  " + issue.summary);
+      lines.push("  " + issue.explanation);
+      (issue.evidence || []).forEach(function (item) {
+        lines.push("  证据 " + (item.label || "") + " 版本 " + (item.versionId || "无") + " 原文：" + (item.originalText || "（无原文块）"));
+        if (item.current != null || item.extracted != null) {
+          lines.push("    抽取原值：" + String(item.extracted) + " 规则读取值：" + String(item.current) + (item.normalized != null ? " 归一：" + String(item.normalized) : ""));
+        }
+      });
+      formatCalculationLines(issue.calculation).forEach(function (line) { lines.push("  " + line); });
+      if (issue.resolution) lines.push("  复核结论：" + issue.resolution.actor + " " + formatTime(issue.resolution.at) + " " + issue.resolution.reason);
+      if (issue.priorResolution) lines.push("  曾有复核结论：" + issue.priorResolution.reason);
+    });
+    var unresolved = caseObj.issues.filter(function (issue) { return issue.status === "open" && issue.blocking; });
+    lines.push("", "三、未决关键事项");
+    if (!unresolved.length) lines.push("无。");
+    unresolved.forEach(function (issue) { lines.push(issue.ruleId + " " + issue.key + " " + issue.title); });
+    lines.push("", "四、复核人更正与理由");
+    var corrections = 0;
+    caseObj.materials.forEach(function (material) {
+      material.versions.forEach(function (version) {
+        Object.keys(version.fields).forEach(function (key) {
+          version.fields[key].corrections.forEach(function (item) {
+            corrections += 1;
+            lines.push(TYPE_LABEL[material.type] + " " + version.id + " " + key + " " + String(item.from) + " → " + String(item.to) + " 理由：" + item.reason + " 操作者：" + item.actor);
+          });
+        });
+      });
+    });
+    if (!corrections) lines.push("没有字段更正。");
+    lines.push("", "五、历程");
+    caseObj.events.forEach(function (event) {
+      lines.push(formatTime(event.at) + " " + event.actor + " " + event.summary + (event.detail ? " " + event.detail : ""));
+    });
+    lines.push("", "完。刷新页面会丢弃本次内存中的改动。此文件不是银行审批结果。");
+    return lines.join("\n");
+  }
+
+  function buildSnapshot(state, meta) {
+    return {
+      kind: "loan-material-precheck-demo-state",
+      disclaimer: DISCLOSURE,
+      notALoanDecision: true,
+      notTamperProof: true,
+      persistence: "memory-only-refresh-resets",
+      ruleVersion: RULE_VERSION,
+      baselineDate: BASELINE_DATE,
+      exportedAt: meta.exportedAt,
+      reviewerName: meta.reviewerName,
+      activeCaseId: meta.activeCaseId,
+      cases: state.cases
+    };
+  }
+
+  function runEngineTests() {
+    var results = [];
+    function assert(name, cond, detail) {
+      results.push({ name: name, pass: !!cond, detail: cond ? "" : (detail || "") });
+    }
+    function openKeys(caseObj) {
+      return caseObj.issues.filter(function (issue) { return issue.status === "open"; }).map(function (issue) { return issue.key; }).sort();
+    }
+    function unique(issues) {
+      var keys = issues.map(function (issue) { return issue.key; });
+      return new Set(keys).size === keys.length;
+    }
+    var T2 = "2026-11-24T02:00:00.000Z";
+    var T3 = "2026-11-24T03:00:00.000Z";
+    var T4 = "2026-11-24T04:00:00.000Z";
+    var T5 = "2026-11-24T05:00:00.000Z";
+    var actor = "测试员";
+    var state = createInitialState();
+    var normal = state.cases[0];
+    var missing = state.cases[1];
+    var composite = state.cases[2];
+    assert("三案隔离装载", state.cases.length === 3, "");
+    assert("正常案没有未决事项", openKeys(normal).length === 0, openKeys(normal).join(","));
+    assert("正常案不是缺件", !normal.issues.some(function (issue) { return issue.ruleId === "R01"; }), "");
+    assert("正常案状态为待出报告", deriveStatus(normal) === "pending-report", deriveStatus(normal));
+    assert("正常案六条规则通过", normal.passes.map(function (item) { return item.ruleId; }).join(",") === "R01,R02,R03,R04,R05,R06", "");
+    var normalCalc = normal.passes.filter(function (item) { return item.ruleId === "R05"; })[0].calculation;
+    assert("正常案工资合计 5400000 分", normalCalc.salaryTotalCents === 5400000 && normalCalc.averageCents === 1800000 && normalCalc.remainderCents === 0, String(normalCalc.salaryTotalCents));
+    assert("正常案排除两笔非工资", normalCalc.excluded.length === 2, String(normalCalc.excluded.length));
+    assert("缺收入证明恰好两项", JSON.stringify(openKeys(missing)) === JSON.stringify(["R01|missing|income", "R05|compare-incomplete"]), openKeys(missing).join(","));
+    assert("缺件案为待补充", deriveStatus(missing) === "pending-supplement", "");
+    var missingCalc = missing.issues.filter(function (issue) { return issue.key === "R05|compare-incomplete"; })[0].calculation;
+    assert("缺件时不编造收入证明金额", missingCalc.incomeMonthlyCents == null && missingCalc.declaredCents === 1200000 && missingCalc.averageCents === 1200000, "");
+    assert("复合案事项固定", JSON.stringify(openKeys(composite)) === JSON.stringify(["R02|unknown|case-composite-income", "R03|mockId", "R03|name", "R05|amount-diff", "R06|quality|case-composite-income"]), openKeys(composite).join(","));
+    assert("复合案为待复核", deriveStatus(composite) === "pending-review", deriveStatus(composite));
+    var income = materialByType(composite, "income");
+    assert("未知期间保持 null", income.versions[0].fields.periodStart.current == null && income.versions[0].fields.periodEnd.extracted == null, "");
+    var amount = composite.issues.filter(function (issue) { return issue.key === "R05|amount-diff"; })[0];
+    assert("复合案整数分与余数", amount.calculation.salaryTotalCents === 4500001 && amount.calculation.averageCents === 1500000 && amount.calculation.remainderCents === 1, JSON.stringify({
+      total: amount.calculation.salaryTotalCents,
+      avg: amount.calculation.averageCents,
+      rem: amount.calculation.remainderCents
+    }));
+    assert("金额格式不用浮点误差", formatCents(1500001) === "15000.01" && formatCents(4500001) === "45000.01" && formatCents(1000000) === "10000.00", formatCents(1500001));
+    assert("申报与月均差额 10000.00 元", amount.calculation.pairs[0].diffCents === 1000000, String(amount.calculation.pairs[0].diffCents));
+    assert("姓名事项至少两个来源", composite.issues.filter(function (issue) { return issue.key === "R03|name"; })[0].evidence.length >= 2, "");
+    assert("证件号事项包含冲突双方", JSON.stringify(composite.issues.filter(function (issue) { return issue.key === "R03|mockId"; })[0].evidence.map(function (item) { return item.current; })).indexOf("SYN-ID-C-20999") >= 0, "");
+    assert("期间未知不写成相同", amount.calculation.samePeriod == null, String(amount.calculation.samePeriod));
+    assert("归一姓名忽略间隔号", normalizeName("陈·思远") === normalizeName("陈思远") && normalizeName("陈 思远") === "陈思远", "");
+    assert("归一证件号忽略连字符与全角", normalizeId("ＳＹＮ－ＩＤ－Ａ－１００８６") === normalizeId("SYN-ID-A-10086"), normalizeId("ＳＹＮ－ＩＤ－Ａ－１００８６"));
+    assert("金额解析拒绝科学计数法", parseYuanToCents("15000.01") === 1500001 && parseYuanToCents("1e3") == null && parseYuanToCents("15000.009") == null, "");
+    var repeated = recheck(recheck(composite, T2), T3);
+    assert("重复检查不新增事项", JSON.stringify(openKeys(repeated)) === JSON.stringify(openKeys(composite)) && repeated.events.length === composite.events.length, String(repeated.events.length));
+    assert("事项键不重复", unique(repeated.issues), "");
+    var blocked = completeCase(composite, { humanConfirmed: true, actor: actor, at: T2 });
+    assert("未决事项不能完成", blocked.ok === false, blocked.error || "");
+    var noConfirm = completeCase(normal, { humanConfirmed: false, actor: actor, at: T2 });
+    assert("正常案也要人工确认", noConfirm.ok === false, "");
+    var done = completeCase(normal, { humanConfirmed: true, actor: actor, at: T2 });
+    assert("确认后完成", done.ok === true && deriveStatus(done.case) === "completed", "");
+    assert("完成后标题改为已完成", describeCase(done.case).headline === "预审已完成" && describeCase(done.case).initialTitle === "口径一致", describeCase(done.case).headline);
+    var reopened = correctField(done.case, {
+      materialId: "case-normal-application",
+      fieldKey: "loanPurpose",
+      newValue: "家居局部翻新",
+      reason: "完成后补充了一个用途写法",
+      actor: actor,
+      at: T3
+    });
+    assert("完成后更正会重开", reopened.ok === true && reopened.case.completedAt == null && deriveStatus(reopened.case) !== "completed", deriveStatus(reopened.case));
+    var edited = correctField(normal, {
+      materialId: "case-normal-application",
+      fieldKey: "declaredMonthlyIncomeCents",
+      newValue: "20000",
+      reason: "按复核说明改申报月收入",
+      actor: actor,
+      at: T2
+    });
+    assert("更正要求已存在且重算", edited.ok === true, edited.error || "");
+    var editedField = currentVersion(materialByType(edited.case, "application")).fields.declaredMonthlyIncomeCents;
+    assert("保留原值和新值", editedField.extracted === 1800000 && editedField.current === 2000000 && editedField.corrections[0].reason.indexOf("申报") >= 0, "");
+    assert("原文块不随更正改写", edited.case.materials[0].versions[0].blocks.some(function (block) { return block.key === "declaredMonthlyIncomeCents" && block.text.indexOf("18000.00") >= 0; }), "");
+    assert("更正后出现金额事项", openKeys(edited.case).indexOf("R05|amount-diff") >= 0, openKeys(edited.case).join(","));
+    var editedView = describeCase(edited.case);
+    assert("更正后不再沿用口径一致作为现状", editedView.headline.indexOf("口径一致") < 0 && editedView.detail.indexOf("月收入数字不一致") >= 0 && editedView.initialTitle === "口径一致", editedView.headline);
+    var emptyReason = correctField(normal, { materialId: "case-normal-application", fieldKey: "applicantName", newValue: "陈思远甲", reason: "无", actor: actor, at: T2 });
+    assert("短理由被拒绝", emptyReason.ok === false, "");
+    var dotted = correctField(normal, {
+      materialId: "case-normal-identity",
+      fieldKey: "name",
+      newValue: "陈·思远",
+      reason: "只加间隔号，归一后应仍一致",
+      actor: actor,
+      at: T2
+    });
+    assert("归一后不误报姓名冲突", dotted.ok === true && openKeys(dotted.case).indexOf("R03|name") < 0, openKeys(dotted.case).join(","));
+    var beforeMissing = JSON.stringify(missing);
+    assert("纯函数不改入参", JSON.stringify(state.cases[1]) === beforeMissing, "");
+    var matched = addMaterialVersion(missing, { presetId: "preset-b-income-match", reason: "补上与工资入账一致的收入证明样本", actor: actor, at: T2 });
+    assert("补充后缺件清除", matched.ok === true && deriveStatus(matched.case) === "pending-report" && openKeys(matched.case).length === 0, openKeys(matched.case).join(","));
+    assert("补充后旧缺件留痕", matched.case.issues.some(function (issue) { return issue.key === "R01|missing|income" && issue.status === "superseded"; }), "");
+    var matchedView = describeCase(matched.case);
+    assert("补充后标题不再写缺件", matchedView.headline.indexOf("缺少收入证明") < 0 && matchedView.detail.indexOf("缺少收入证明") < 0 && matchedView.detail.indexOf("不在卷") < 0 && matchedView.detail.indexOf("当前卷内没有") < 0, matchedView.headline + " / " + matchedView.detail);
+    assert("补充后仍保留初始场景标签", matchedView.initialTitle === "缺少收入证明" && matchedView.initialSummary.indexOf("收入证明不在卷") >= 0, "");
+    var matchedReport = buildReportText(matched.case, { reviewerName: actor, exportedAt: T3 });
+    var currentReportLine = matchedReport.split("\n").filter(function (line) { return line.indexOf("当前说明：") === 0; })[0] || "";
+    assert("补充后报告当前说明不再写缺件", currentReportLine.indexOf("缺少收入证明") < 0 && currentReportLine.indexOf("不在卷") < 0 && matchedReport.indexOf("初始场景：缺少收入证明") >= 0, currentReportLine);
+    var mismatch = addMaterialVersion(missing, { presetId: "preset-b-income-diff", reason: "改放一份金额不同的收入证明", actor: actor, at: T3 });
+    assert("不一致补充会打开差额", openKeys(mismatch.case).indexOf("R05|amount-diff") >= 0 && openKeys(mismatch.case).indexOf("R01|missing|income") < 0, openKeys(mismatch.case).join(","));
+    var mismatchView = describeCase(mismatch.case);
+    assert("差额补充的当前说明不是缺件", mismatchView.headline.indexOf("缺少收入证明") < 0 && mismatchView.detail.indexOf("不在卷") < 0 && mismatchView.detail.indexOf("月收入数字不一致") >= 0, mismatchView.headline + " / " + mismatchView.detail);
+    var again = recheck(matched.case, T4);
+    assert("补充后重复检查幂等", JSON.stringify(again.issues) === JSON.stringify(matched.case.issues) && again.events.length === matched.case.events.length, "");
+    var replaced = addMaterialVersion(composite, { presetId: "preset-c-identity-align", reason: "用证件号一致的内部样本替换", actor: actor, at: T2 });
+    var identity = materialByType(replaced.case, "identity");
+    assert("替换保留旧版本", identity.versions.length === 2 && identity.versions[0].fields.mockId.extracted === "SYN-ID-C-20999" && identity.versions[1].fields.mockId.current === "SYN-ID-C-20001", "");
+    var oldIdIssue = replaced.case.issues.filter(function (issue) { return issue.key === "R03|mockId"; })[0];
+    assert("旧证件冲突被取代但留证据", oldIdIssue.status === "superseded" && JSON.stringify(oldIdIssue.evidence).indexOf("SYN-ID-C-20999") >= 0, oldIdIssue.status);
+    var aligned = addMaterialVersion(replaced.case, { presetId: "preset-c-income-align", reason: "换上可读且期间对齐的收入证明", actor: actor, at: T3 });
+    var declaredFix = correctField(aligned.case, {
+      materialId: "case-composite-application",
+      fieldKey: "declaredMonthlyIncomeCents",
+      newValue: "15000.00",
+      reason: "按流水工资月均的整数分更正申报",
+      actor: actor,
+      at: T4
+    });
+    assert("复合案可经样本和更正达到待出报告", declaredFix.ok === true && deriveStatus(declaredFix.case) === "pending-report" && openKeys(declaredFix.case).length === 0, openKeys(declaredFix.case).join(","));
+    var fixedView = describeCase(declaredFix.case);
+    assert("复合案解决后现状不再写原冲突", fixedView.headline.indexOf("不一致") < 0 && fixedView.headline.indexOf("不可读") < 0 && fixedView.detail.indexOf("不可读") < 0 && fixedView.initialTitle === "多项待说明", fixedView.headline + " / " + fixedView.detail);
+    assert("旧收入版本仍在", materialByType(declaredFix.case, "income").versions.length === 2 && materialByType(declaredFix.case, "income").versions[0].fields.name.extracted === "周启铭", "");
+    assert("对齐后期间相同且余数仍披露", declaredFix.case.passes.filter(function (item) { return item.ruleId === "R05"; })[0].calculation.samePeriod === true && declaredFix.case.passes.filter(function (item) { return item.ruleId === "R05"; })[0].calculation.remainderCents === 1, "");
+    var waived = resolveIssue(composite, { key: "R02|unknown|case-composite-income", reason: "已查看不可读标记，先记录复核，不填数值", actor: actor, at: T2, acknowledged: true });
+    assert("有理由才能关闭未知项", waived.ok === true, waived.error || "");
+    assert("关闭未知项不会填值", currentVersion(materialByType(waived.case, "income")).fields.periodStart.current == null, "");
+    var waivedAgain = recheck(waived.case, T3);
+    assert("证据没变时复核结论保留", waivedAgain.issues.filter(function (issue) { return issue.key === "R02|unknown|case-composite-income"; })[0].status === "resolved", "");
+    var noAck = resolveIssue(composite, { key: "R03|name", reason: "想直接跳过这个差异", actor: actor, at: T2, acknowledged: false });
+    assert("未确认不能豁免", noAck.ok === false, "");
+    var named = resolveIssue(composite, { key: "R03|name", reason: "先记一笔，随后会改材料", actor: actor, at: T2, acknowledged: true });
+    var changedName = correctField(named.case, {
+      materialId: "case-composite-income",
+      fieldKey: "name",
+      newValue: "周大明",
+      reason: "试一个仍然不同的姓名",
+      actor: actor,
+      at: T3
+    });
+    assert("相关更正会重开已复核事项", changedName.case.issues.filter(function (issue) { return issue.key === "R03|name"; })[0].status === "open", "");
+    var malicious = "<" + "script>alert(1)<" + "/script>";
+    var poisoned = correctField(normal, {
+      materialId: "case-normal-application",
+      fieldKey: "applicantName",
+      newValue: malicious,
+      reason: "安全测试字面量不执行",
+      actor: actor,
+      at: T2
+    });
+    var report = buildReportText(poisoned.case, { reviewerName: actor, exportedAt: T3 });
+    assert("报告保留恶意字符串原文", report.indexOf(malicious) >= 0 && report.indexOf(DISCLOSURE) >= 0 && report.indexOf(RULE_VERSION) >= 0, "");
+    assert("草稿报告标明草稿和未决", buildReportText(composite, { reviewerName: actor, exportedAt: T2 }).indexOf("草稿") >= 0 && buildReportText(composite, { reviewerName: actor, exportedAt: T2 }).indexOf("未决") >= 0, "");
+    var compositeReport = buildReportText(composite, { reviewerName: "复核员", exportedAt: T2 });
+    assert("报告含中文案件与计算", compositeReport.indexOf("周启明") >= 0 && compositeReport.indexOf("周启铭") >= 0 && compositeReport.indexOf("45000.01") >= 0 && compositeReport.indexOf("基准日：2026-11-24") >= 0, "");
+    var snapshot = buildSnapshot(state, { reviewerName: "复核员", exportedAt: T2, activeCaseId: "case-normal" });
+    assert("JSON 快照可解析且含声明", JSON.parse(JSON.stringify(snapshot)).disclaimer === DISCLOSURE && JSON.stringify(snapshot).indexOf("林晓彤") >= 0, "");
+    var mutated = correctField(normal, {
+      materialId: "case-normal-application",
+      fieldKey: "applicationDate",
+      newValue: "2026-01-01",
+      reason: "把申请日改到窗口外",
+      actor: actor,
+      at: T2
+    });
+    assert("窗口外日期被规则抓住", openKeys(mutated.case).indexOf("R04|application-date") >= 0, openKeys(mutated.case).join(","));
+    var back = resetCase("case-composite");
+    assert("重置回到初始复合案", JSON.stringify(back.issues) === JSON.stringify(composite.issues) && materialByType(back, "income").versions.length === 1, "");
+    var missingAgain = resetCase("case-missing");
+    var missingView = describeCase(missingAgain);
+    assert("重置后恢复缺件说明", missingView.headline.indexOf("缺少收入证明") >= 0 && missingView.detail.indexOf("当前卷内没有：收入证明") >= 0 && missingView.initialTitle === "缺少收入证明", missingView.headline + " / " + missingView.detail);
+    assert("初始缺件说明来自当前规则", describeCase(missing).headline.indexOf("缺少收入证明") >= 0 && describeCase(missing).detail.indexOf("不在卷") < 0, describeCase(missing).detail);
+    var other = createInitialState();
+    correctField(other.cases[0], { materialId: "case-normal-application", fieldKey: "loanPurpose", newValue: "不影响邻案", reason: "隔离测试用的理由", actor: actor, at: T2 });
+    assert("改一案不写进另一案对象", other.cases[1].applicant === "林晓彤" && other.cases[1].events.length === 1, "");
+    var failed = results.filter(function (item) { return !item.pass; });
+    return { total: results.length, pass: results.length - failed.length, fail: failed.length, failures: failed, results: results };
+  }
+
+  var api = {
+    RULE_VERSION: RULE_VERSION,
+    BASELINE_DATE: BASELINE_DATE,
+    DISCLOSURE: DISCLOSURE,
+    RULEBOOK: RULEBOOK,
+    TYPE_ORDER: TYPE_ORDER,
+    TYPE_LABEL: TYPE_LABEL,
+    STATE_LABEL: STATE_LABEL,
+    FIELD_DEFS: FIELD_DEFS,
+    CATEGORY_LABEL: CATEGORY_LABEL,
+    createInitialState: createInitialState,
+    deriveStatus: deriveStatus,
+    describeCase: describeCase,
+    recheck: recheck,
+    correctField: correctField,
+    addMaterialVersion: addMaterialVersion,
+    resolveIssue: resolveIssue,
+    completeCase: completeCase,
+    recordExport: recordExport,
+    resetCase: resetCase,
+    buildReportText: buildReportText,
+    buildSnapshot: buildSnapshot,
+    formatCents: formatCents,
+    formatCalculationLines: formatCalculationLines,
+    formatTime: formatTime,
+    parseYuanToCents: parseYuanToCents,
+    normalizeName: normalizeName,
+    normalizeId: normalizeId,
+    originLabel: originLabel,
+    runEngineTests: runEngineTests
+  };
+  globalThis.Precheck = api;
+})();
+</script>
+<script id="precheck-ui">
+"use strict";
+(function () {
+  var P = globalThis.Precheck;
+  var ui = {
+    model: P.createInitialState(),
+    caseId: "case-normal",
+    materialId: "case-normal-application",
+    versionId: null,
+    issueKey: null,
+    centerMode: "single",
+    rightTab: "issues",
+    mobilePane: "center",
+    confirmChecked: false
+  };
+
+  function h(tag, props) {
+    var node = document.createElement(tag);
+    var children = Array.prototype.slice.call(arguments, 2);
+    if (props) {
+      Object.keys(props).forEach(function (key) {
+        var value = props[key];
+        if (value == null || value === false) return;
+        if (key === "class") node.className = value;
+        else if (key === "text") node.textContent = value;
+        else if (key === "hidden") node.hidden = !!value;
+        else if (key === "checked") node.checked = !!value;
+        else if (key === "disabled") node.disabled = !!value;
+        else if (key === "value" && (tag === "input" || tag === "textarea" || tag === "select")) node.value = value;
+        else if (key.indexOf("on") === 0 && typeof value === "function") node.addEventListener(key.slice(2).toLowerCase(), value);
+        else node.setAttribute(key, String(value));
+      });
+    }
+    if (tag === "button" && !node.hasAttribute("type")) node.type = "button";
+    children.flat().forEach(function (child) {
+      if (child == null || child === false) return;
+      node.appendChild(child.nodeType ? child : document.createTextNode(String(child)));
+    });
+    return node;
+  }
+
+  function activeCase() {
+    return ui.model.cases.filter(function (item) { return item.id === ui.caseId; })[0];
+  }
+
+  function actor() {
+    var input = document.getElementById("reviewer-name");
+    var name = input ? input.value.trim() : "";
+    return name || "复核员（演示）";
+  }
+
+  function nowIso() { return new Date().toISOString(); }
+
+  function toast(message) {
+    var node = document.getElementById("toast");
+    node.textContent = message;
+    node.hidden = false;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(function () { node.hidden = true; }, 3600);
+  }
+
+  function commit(next, message) {
+    var index = ui.model.cases.findIndex(function (item) { return item.id === next.id; });
+    ui.model.cases[index] = next;
+    ui.confirmChecked = false;
+    if (ui.issueKey && !next.issues.some(function (issue) { return issue.key === ui.issueKey; })) ui.issueKey = null;
+    render();
+    if (message) toast(message);
+  }
+
+  function currentMaterial(caseObj, materialId) {
+    return caseObj.materials.filter(function (item) { return item.id === materialId; })[0] || null;
+  }
+
+  function selectedVersion(material) {
+    if (!material) return null;
+    if (ui.versionId) {
+      var found = material.versions.filter(function (item) { return item.id === ui.versionId; })[0];
+      if (found) return found;
+    }
+    return material.versions[material.versions.length - 1];
+  }
+
+  function issueByKey(caseObj, key) {
+    return caseObj.issues.filter(function (issue) { return issue.key === key; })[0] || null;
+  }
+
+  function download(filename, content, mime) {
+    var blob = new Blob([content], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  function filePart(name) {
+    var clean = String(name).replace(/[^\u4e00-\u9fffA-Za-z0-9_-]+/g, "");
+    return clean.slice(0, 20) || "case";
+  }
+
+  function render() {
+    renderSwitch();
+    renderLeft();
+    renderCenter();
+    renderRight();
+    var caseObj = activeCase();
+    document.getElementById("pane-cases").classList.toggle("is-on", ui.mobilePane === "cases");
+    document.getElementById("pane-center").classList.toggle("is-on", ui.mobilePane === "center");
+    document.getElementById("pane-issues").classList.toggle("is-on", ui.mobilePane === "issues");
+    document.title = "材料预审 · " + caseObj.applicant;
+  }
+
+  function renderSwitch() {
+    var bar = document.getElementById("pane-switch");
+    bar.replaceChildren();
+    [["cases", "案件材料"], ["center", "原文与字段"], ["issues", "问题与复核"]].forEach(function (item) {
+      bar.appendChild(h("button", {
+        type: "button",
+        text: item[1],
+        "aria-selected": ui.mobilePane === item[0] ? "true" : "false",
+        onclick: function () { ui.mobilePane = item[0]; render(); }
+      }));
+    });
+  }
+
+  function renderLeft() {
+    var caseObj = activeCase();
+    var root = document.getElementById("pane-cases");
+    var scroll = h("div", { class: "pane-scroll" });
+    scroll.appendChild(h("div", { class: "pane-label", text: "案件" }));
+    ui.model.cases.forEach(function (item) {
+      var status = P.deriveStatus(item);
+      var view = P.describeCase(item);
+      var openCount = item.issues.filter(function (issue) { return issue.status === "open"; }).length;
+      var button = h("button", {
+        class: "case-btn" + (item.id === ui.caseId ? " is-on" : ""),
+        "data-case-id": item.id,
+        onclick: function () { selectCase(item.id); }
+      });
+      var top = h("div", { class: "case-top" }, h("span", { class: "case-name", text: item.applicant }), pill(status));
+      button.appendChild(top);
+      button.appendChild(h("div", { class: "case-sum case-now", text: view.headline + " · 未决 " + openCount }));
+      button.appendChild(h("div", { class: "meta case-initial", text: "初始场景：" + view.initialTitle }));
+      scroll.appendChild(button);
+    });
+    scroll.appendChild(h("div", { class: "pane-label", text: "本案材料" }));
+    var activeIssue = issueByKey(caseObj, ui.issueKey);
+    P.TYPE_ORDER.forEach(function (type) {
+      var material = caseObj.materials.filter(function (item) { return item.type === type; })[0];
+      if (!material) {
+        var missingHit = activeIssue && activeIssue.evidence.some(function (item) { return item.missing && item.type === type; });
+        scroll.appendChild(h("button", {
+          class: "mat-btn missing" + (missingHit ? " is-hit" : ""),
+          text: P.TYPE_LABEL[type] + " · 不在卷",
+          onclick: function () { openSupplement(type); }
+        }));
+        return;
+      }
+      var version = material.versions[material.versions.length - 1];
+      var button = h("button", {
+        class: "mat-btn" + (material.id === ui.materialId ? " is-on" : ""),
+        "data-material-id": material.id,
+        onclick: function () {
+          ui.materialId = material.id;
+          ui.versionId = null;
+          ui.centerMode = "single";
+          ui.mobilePane = "center";
+          render();
+        }
+      });
+      button.appendChild(h("div", { class: "mat-top" }, h("span", { text: P.TYPE_LABEL[type] }), h("span", { class: "meta", text: "v" + material.versions.length })));
+      button.appendChild(h("div", { class: "meta", text: version.label }));
+      scroll.appendChild(button);
+    });
+    scroll.appendChild(h("p", { class: "meta", text: "样本只能从本案内部预设里补充或替换，不能上传任意文件。" }));
+    scroll.appendChild(h("button", { class: "quiet", text: "重置全部三案", onclick: function () { openReset(true); } }));
+    scroll.appendChild(h("button", { class: "quiet", text: "运行引擎自测", onclick: openTests }));
+    root.replaceChildren(scroll);
+  }
+
+  function pill(status) {
+    return h("span", { class: "pill", "data-state": status, text: P.STATE_LABEL[status] });
+  }
+
+  function selectCase(caseId) {
+    ui.caseId = caseId;
+    var caseObj = activeCase();
+    var first = caseObj.materials[0];
+    ui.materialId = first ? first.id : "";
+    ui.versionId = null;
+    ui.issueKey = null;
+    ui.centerMode = "single";
+    ui.confirmChecked = false;
+    ui.mobilePane = "cases";
+    render();
+  }
+
+  function renderCenter() {
+    var caseObj = activeCase();
+    var root = document.getElementById("pane-center");
+    var issue = issueByKey(caseObj, ui.issueKey);
+    var view = P.describeCase(caseObj);
+    var head = h("div", { class: "center-head" });
+    var initial = h("details", { class: "case-initial" });
+    initial.appendChild(h("summary", { text: "初始场景：" + view.initialTitle }));
+    initial.appendChild(h("p", { text: view.initialSummary }));
+    head.appendChild(h("div", {},
+      h("h2", { class: "case-now", text: caseObj.applicant + " · " + view.headline }),
+      h("div", { class: "meta case-now-detail", text: view.detail }),
+      initial
+    ));
+    var multi = issue && evidenceDocs(caseObj, issue).length >= 2;
+    head.appendChild(h("div", { class: "seg" },
+      h("button", { text: "单份原文", "aria-selected": ui.centerMode !== "compare" ? "true" : "false", onclick: function () { ui.centerMode = "single"; render(); } }),
+      h("button", { text: "对照引用", disabled: !multi, "aria-selected": ui.centerMode === "compare" ? "true" : "false", onclick: function () { ui.centerMode = "compare"; render(); } })
+    ));
+    var scroll = h("div", { class: "pane-scroll" });
+    if (ui.centerMode === "compare" && multi) scroll.appendChild(renderCompare(caseObj, issue));
+    else scroll.appendChild(renderSingle(caseObj, issue));
+    root.replaceChildren(head, scroll);
+  }
+
+  function evidenceDocs(caseObj, issue) {
+    var docs = [];
+    var seen = {};
+    (issue.evidence || []).forEach(function (item) {
+      if (!item.materialId || seen[item.materialId]) return;
+      seen[item.materialId] = true;
+      var material = currentMaterial(caseObj, item.materialId);
+      if (!material) return;
+      var version = material.versions.filter(function (ver) { return ver.id === item.versionId; })[0] || material.versions[material.versions.length - 1];
+      docs.push({ material: material, version: version, evidence: item });
+    });
+    return docs;
+  }
+
+  function anchorsFor(issue, materialId) {
+    var set = {};
+    if (!issue) return set;
+    (issue.evidence || []).forEach(function (item) {
+      if (item.materialId !== materialId) return;
+      (item.anchors || []).forEach(function (anchor) { set[anchor] = true; });
+      if (item.quality) set.__quality = true;
+    });
+    return set;
+  }
+
+  function renderCompare(caseObj, issue) {
+    var wrap = h("div", { class: "sheet-wrap compare" });
+    evidenceDocs(caseObj, issue).forEach(function (doc) {
+      var col = h("div", {});
+      var current = doc.material.versions[doc.material.versions.length - 1];
+      col.appendChild(h("div", { class: "sheet-cap", text: P.TYPE_LABEL[doc.material.type] + " · " + doc.version.label + (doc.version.id === current.id ? " · 当前" : " · 引用版本") }));
+      col.appendChild(renderSheet(doc.material, doc.version, anchorsFor(issue, doc.material.id), doc.material.id === ui.materialId));
+      wrap.appendChild(col);
+    });
+    wrap.appendChild(renderFields(caseObj, issue));
+    return wrap;
+  }
+
+  function renderSingle(caseObj, issue) {
+    var material = currentMaterial(caseObj, ui.materialId) || caseObj.materials[0];
+    var box = h("div", {});
+    if (!material) {
+      box.appendChild(h("p", { text: "这一类材料不在卷。请从内部样本补充，系统不会凭空生成字段。" }));
+      return box;
+    }
+    var version = selectedVersion(material);
+    var bar = h("div", { class: "mat-top" });
+    var select = h("select", { "aria-label": "材料版本", onchange: function (event) { ui.versionId = event.target.value; render(); } });
+    material.versions.forEach(function (item, index) {
+      var option = h("option", { value: item.id, text: "v" + (index + 1) + " · " + item.label + (item.supersededAt ? " · 历史" : " · 当前") });
+      if (item.id === version.id) option.selected = true;
+      select.appendChild(option);
+    });
+    bar.appendChild(select);
+    box.appendChild(bar);
+    box.appendChild(h("div", { class: "sheet-cap", text: "抽取方式：" + version.extractionNote }));
+    box.appendChild(renderSheet(material, version, anchorsFor(issue, material.id), true));
+    box.appendChild(renderFields(caseObj, issue));
+    return box;
+  }
+
+  function renderSheet(material, version, anchors, selected) {
+    var sheet = h("article", { class: "sheet" + (selected ? " is-selected" : "") });
+    if (version.extractionQuality !== "readable") {
+      sheet.appendChild(h("div", { class: "quality-banner" + (anchors.__quality ? " is-hit" : ""), text: "来源标记：" + version.extractionQuality + " · " + version.extractionNote }));
+    }
+    version.blocks.forEach(function (block) {
+      if (block.type === "kicker") sheet.appendChild(h("div", { class: "kicker", text: block.text }));
+      else if (block.type === "h") sheet.appendChild(h("h3", { text: block.text }));
+      else if (block.type === "p" || block.type === "watermark") sheet.appendChild(h("p", { text: block.text }));
+      else {
+        var row = h("div", { class: (block.type === "txn" ? "txn" : "row") + ((anchors[block.key]) ? " is-hit" : ""), "data-anchor": block.key });
+        row.appendChild(h("span", { class: "k", text: block.label }));
+        row.appendChild(h("span", { class: "v" + (block.unreadable ? " unreadable" : ""), text: block.text }));
+        sheet.appendChild(row);
+      }
+    });
+    return sheet;
+  }
+
+  function renderFields(caseObj, issue) {
+    var material = currentMaterial(caseObj, ui.materialId) || caseObj.materials[0];
+    if (!material) return h("div");
+    var version = selectedVersion(material);
+    var current = material.versions[material.versions.length - 1];
+    var editable = version.id === current.id && !version.supersededAt;
+    var wrap = h("div", {});
+    wrap.appendChild(h("div", { class: "pane-label", text: "模拟抽取字段 · " + P.TYPE_LABEL[material.type] }));
+    wrap.appendChild(h("p", { class: "meta", text: editable ? "规则读取当前值。抽取原值和原文块不会被更正悄悄改掉。" : "正在查看历史版本，不能在这一版上改字段。" }));
+    var table = h("table", { class: "fields" });
+    table.appendChild(h("tr", {}, h("th", { text: "字段" }), h("th", { text: "规则当前值" }), h("th", { text: "抽取原值" }), h("th", { text: "" })));
+    P.FIELD_DEFS[material.type].forEach(function (def) {
+      var field = version.fields[def.key];
+      var tr = h("tr", { "data-field": def.key });
+      tr.appendChild(h("td", { text: def.label }));
+      var currentCell = h("td");
+      currentCell.appendChild(document.createTextNode(displayField(def.kind, field.current)));
+      if (field.current !== field.extracted) currentCell.appendChild(h("div", {}, h("span", { class: "tag warn", text: "人工更正" })));
+      if (field.sourceStatus !== "readable") currentCell.appendChild(h("div", {}, h("span", { class: "tag warn", text: field.sourceStatus })));
+      tr.appendChild(currentCell);
+      tr.appendChild(h("td", { text: displayField(def.kind, field.extracted) }));
+      var action = h("td");
+      if (def.kind !== "transactions") {
+        action.appendChild(h("button", {
+          text: "更正",
+          disabled: !editable,
+          onclick: function () { openCorrect(material, def); }
+        }));
+      } else action.appendChild(h("span", { class: "meta", text: "用样本替换整份" }));
+      tr.appendChild(action);
+      table.appendChild(tr);
+      if (field.corrections.length) {
+        var history = h("tr");
+        var cell = h("td", { colspan: "4" });
+        field.corrections.forEach(function (item) {
+          cell.appendChild(h("div", { class: "meta", text: P.formatTime(item.at) + " " + item.actor + " 把「" + displayField(def.kind, item.from) + "」改为「" + displayField(def.kind, item.to) + "」。理由：" + item.reason }));
+        });
+        history.appendChild(cell);
+        table.appendChild(history);
+      }
+    });
+    wrap.appendChild(table);
+    if (issue) wrap.appendChild(h("p", { class: "meta", text: "黄色是当前事项引用的原文。跨材料事项会把涉及的版本并排。" }));
+    return wrap;
+  }
+
+  function displayField(kind, value) {
+    if (value == null || value === "") return "（空）";
+    if (kind === "cents") return P.formatCents(value) + " 元 / " + value + " 分";
+    if (kind === "transactions") return value.length + " 笔";
+    return String(value);
+  }
+
+  function renderRight() {
+    var caseObj = activeCase();
+    var root = document.getElementById("pane-issues");
+    var openCount = caseObj.issues.filter(function (issue) { return issue.status === "open"; }).length;
+    var head = h("div", { class: "right-head" }, h("div", {}, h("h2", { text: "复核" }), h("div", { class: "meta", text: "状态 " + P.STATE_LABEL[P.deriveStatus(caseObj)] })));
+    head.appendChild(pill(P.deriveStatus(caseObj)));
+    var tabs = h("div", { class: "tabs" });
+    [["issues", "待办 " + openCount], ["history", "历程"], ["rules", "规则"]].forEach(function (item) {
+      tabs.appendChild(h("button", {
+        text: item[1],
+        "aria-selected": ui.rightTab === item[0] ? "true" : "false",
+        onclick: function () { ui.rightTab = item[0]; ui.mobilePane = "issues"; render(); }
+      }));
+    });
+    var scroll = h("div", { class: "pane-scroll" });
+    if (ui.rightTab === "history") scroll.appendChild(renderHistory(caseObj));
+    else if (ui.rightTab === "rules") scroll.appendChild(renderRules());
+    else scroll.appendChild(renderIssues(caseObj));
+    root.replaceChildren(head, tabs, scroll, renderComplete(caseObj));
+  }
+
+  function renderIssues(caseObj) {
+    var box = h("div");
+    var open = caseObj.issues.filter(function (issue) { return issue.status === "open"; });
+    var resolved = caseObj.issues.filter(function (issue) { return issue.status === "resolved"; });
+    var superseded = caseObj.issues.filter(function (issue) { return issue.status === "superseded"; });
+    if (!open.length) box.appendChild(h("p", { text: "没有未决关键事项。仍要人工确认后，本案才算完成。" }));
+    open.forEach(function (issue) { box.appendChild(issueCard(caseObj, issue)); });
+    if (resolved.length) {
+      box.appendChild(h("div", { class: "pane-label", text: "已记录复核" }));
+      resolved.forEach(function (issue) { box.appendChild(issueCard(caseObj, issue)); });
+    }
+    box.appendChild(h("div", { class: "pane-label", text: "规则通过项" }));
+    caseObj.passes.forEach(function (pass) {
+      var details = h("details");
+      details.appendChild(h("summary", { text: pass.ruleId + " " + pass.title }));
+      details.appendChild(h("p", { text: pass.summary }));
+      P.formatCalculationLines(pass.calculation).forEach(function (line) { details.appendChild(h("div", { class: "meta", text: line })); });
+      box.appendChild(details);
+    });
+    if (superseded.length) {
+      var old = h("details");
+      old.appendChild(h("summary", { text: "已取代的记录 " + superseded.length + " 条" }));
+      superseded.forEach(function (issue) { old.appendChild(issueCard(caseObj, issue)); });
+      box.appendChild(old);
+    }
+    return box;
+  }
+
+  function issueCard(caseObj, issue) {
+    var card = h("article", { class: "issue " + issue.status + (issue.key === ui.issueKey ? " is-selected" : ""), "data-issue-key": issue.key });
+    var top = h("div", { class: "mat-top" }, h("span", { class: "chip", text: issue.ruleId }), h("span", { class: "meta", text: issue.status === "open" ? "未决" : issue.status === "resolved" ? "已复核" : "已取代" }));
+    card.appendChild(top);
+    card.appendChild(h("strong", { text: issue.title }));
+    card.appendChild(h("p", { text: issue.summary }));
+    var explain = h("details");
+    explain.appendChild(h("summary", { text: "为什么进入复核" }));
+    explain.appendChild(h("p", { text: issue.explanation }));
+    card.appendChild(explain);
+    (issue.evidence || []).forEach(function (item) {
+      var quote = item.originalText || "（无）";
+      if (quote.length > 90) quote = quote.slice(0, 90) + "…";
+      card.appendChild(h("div", { class: "meta", text: (item.label || "证据") + " · 原文：" + quote }));
+      if (typeof item.normalized === "string" && String(item.normalized) !== String(item.current)) {
+        card.appendChild(h("div", { class: "meta", text: "归一后：" + item.normalized + "；规则读取原文：" + item.current }));
+      }
+    });
+    if (issue.calculation) {
+      var calcDetails = h("details");
+      if (issue.key === ui.issueKey) calcDetails.open = true;
+      calcDetails.appendChild(h("summary", { text: "计算过程" }));
+      var calc = h("div", { class: "calc" });
+      P.formatCalculationLines(issue.calculation).forEach(function (line) { calc.appendChild(h("div", { text: line })); });
+      calcDetails.appendChild(calc);
+      card.appendChild(calcDetails);
+    }
+    if (issue.resolution) card.appendChild(h("p", { text: "复核：" + issue.resolution.actor + " · " + issue.resolution.reason }));
+    if (issue.priorResolution) card.appendChild(h("p", { class: "meta", text: "先前结论已不沿用：" + issue.priorResolution.reason }));
+    card.appendChild(h("button", { text: "定位原文", onclick: function () { focusIssue(caseObj, issue); } }));
+    if (issue.status === "open") card.appendChild(h("button", { text: "记录复核结论", onclick: function () { openResolve(issue); } }));
+    return card;
+  }
+
+  function focusIssue(caseObj, issue) {
+    ui.issueKey = issue.key;
+    ui.rightTab = "issues";
+    var docs = evidenceDocs(caseObj, issue);
+    if (docs[0]) {
+      ui.materialId = docs[0].material.id;
+      ui.versionId = docs[0].version.id;
+    }
+    ui.centerMode = docs.length >= 2 ? "compare" : "single";
+    ui.mobilePane = "center";
+    render();
+  }
+
+  function renderHistory(caseObj) {
+    var box = h("div");
+    box.appendChild(h("p", { class: "meta", text: "这是本次打开期间的本地历程，刷新即消失，不是防篡改审计。" }));
+    caseObj.events.slice().reverse().forEach(function (event) {
+      var item = h("article", { class: "issue" });
+      item.appendChild(h("div", { class: "meta", text: P.formatTime(event.at) }));
+      item.appendChild(h("strong", { text: event.summary }));
+      item.appendChild(h("p", { text: event.actor + (event.detail ? " · " + event.detail : "") }));
+      box.appendChild(item);
+    });
+    return box;
+  }
+
+  function renderRules() {
+    var box = h("div");
+    box.appendChild(h("p", { text: "规则版本 " + P.RULE_VERSION + "，基准日 " + P.BASELINE_DATE + "。下面是全部计算口径。" }));
+    P.RULEBOOK.forEach(function (rule) {
+      var item = h("article", { class: "issue" });
+      item.appendChild(h("span", { class: "chip", text: rule.id }));
+      item.appendChild(h("strong", { text: " " + rule.title }));
+      item.appendChild(h("p", { text: rule.text }));
+      box.appendChild(item);
+    });
+    return box;
+  }
+
+  function renderComplete(caseObj) {
+    var bar = h("div", { class: "complete-bar" });
+    var open = caseObj.issues.filter(function (issue) { return issue.status === "open" && issue.blocking; });
+    var done = P.deriveStatus(caseObj) === "completed";
+    if (done) bar.appendChild(h("div", { class: "okhint", text: "已于 " + P.formatTime(caseObj.completedAt) + " 由 " + caseObj.completionActor + " 确认。之后若改材料，会重新打开。" }));
+    else if (open.length) bar.appendChild(h("div", { class: "hint", text: "还有 " + open.length + " 项未决关键事项，不能完成。草稿报告可以先导出。" }));
+    else bar.appendChild(h("div", { class: "okhint", text: "关键事项已清空。完成前仍要勾选人工确认。" }));
+    var label = h("label", { class: "checkline" });
+    label.appendChild(h("input", {
+      type: "checkbox",
+      id: "human-confirm",
+      checked: ui.confirmChecked,
+      disabled: done || open.length > 0,
+      onchange: function (event) {
+      ui.confirmChecked = event.target.checked;
+      var button = document.getElementById("btn-complete");
+      if (button) button.disabled = button.dataset.locked === "1" || !ui.confirmChecked;
+    }
+    }));
+    label.appendChild(h("span", { text: "我确认只结束这次材料预审演示，不形成贷款审批结论。" }));
+    bar.appendChild(label);
+    var completeButton = h("button", {
+      class: "primary",
+      id: "btn-complete",
+      text: "确认完成材料预审",
+      disabled: done || open.length > 0 || !ui.confirmChecked,
+      onclick: onComplete
+    });
+    if (done || open.length > 0) completeButton.dataset.locked = "1";
+    bar.appendChild(completeButton);
+    return bar;
+  }
+
+  function onComplete() {
+    var result = P.completeCase(activeCase(), { humanConfirmed: ui.confirmChecked === true, actor: actor(), at: nowIso() });
+    if (!result.ok) { toast(result.error); return; }
+    commit(result.case, "本案材料预审已标记完成。这不是贷款结论。");
+  }
+
+  function openCorrect(material, def) {
+    var version = material.versions[material.versions.length - 1];
+    var field = version.fields[def.key];
+    var error = h("div", { class: "form-error" });
+    var input = h("input", { type: "text", value: def.kind === "cents" && field.current != null ? P.formatCents(field.current) : (field.current || ""), "aria-label": "新值" });
+    var reason = h("textarea", { "aria-label": "更正理由" });
+    openModal("更正字段", [
+      h("p", { text: "原文版本保持不动。保存后只改变规则读取的当前值，并留下旧值、新值和理由。" }),
+      h("p", { class: "meta", text: "抽取原值：" + displayField(def.kind, field.extracted) }),
+      h("label", { class: "stack", text: "新的" + def.label }, input),
+      h("label", { class: "stack", text: "理由" }, reason),
+      error
+    ], function () {
+      var result = P.correctField(activeCase(), {
+        materialId: material.id,
+        versionId: version.id,
+        fieldKey: def.key,
+        newValue: input.value,
+        reason: reason.value,
+        actor: actor(),
+        at: nowIso()
+      });
+      if (!result.ok) { error.textContent = result.error; return false; }
+      closeModal();
+      ui.materialId = material.id;
+      ui.versionId = null;
+      commit(result.case, "已更正并重新计算。");
+      return true;
+    });
+  }
+
+  function openSupplement(preferredType) {
+    var caseObj = activeCase();
+    var presets = caseObj.presets.slice();
+    if (!presets.length) { toast("本案没有可替换的内部样本。"); return; }
+    var selected = presets[0].id;
+    if (preferredType) {
+      var matched = presets.filter(function (item) { return item.type === preferredType; })[0];
+      if (matched) selected = matched.id;
+    }
+    var error = h("div", { class: "form-error" });
+    var reason = h("textarea", { "aria-label": "补充或替换理由" });
+    var list = h("div");
+    presets.forEach(function (preset) {
+      var exists = caseObj.materials.some(function (item) { return item.type === preset.type; });
+      var label = h("label", { class: "checkline" });
+      label.appendChild(h("input", {
+        type: "radio",
+        name: "preset",
+        checked: preset.id === selected,
+        onchange: function () { selected = preset.id; }
+      }));
+      label.appendChild(h("span", { text: preset.label + " · " + (exists ? "将作为新版本替换当前" : "卷内还没有，将作为补充") + "。" + preset.blurb }));
+      list.appendChild(label);
+    });
+    openModal("从内部样本补充或替换", [
+      h("p", { text: "这里没有文件上传，也不会把样本说成 OCR 结果。旧版本和它上面的证据会保留。" }),
+      list,
+      h("label", { class: "stack", text: "理由" }, reason),
+      error
+    ], function () {
+      var result = P.addMaterialVersion(activeCase(), { presetId: selected, reason: reason.value, actor: actor(), at: nowIso() });
+      if (!result.ok) { error.textContent = result.error; return false; }
+      closeModal();
+      ui.materialId = result.materialId;
+      ui.versionId = result.versionId;
+      ui.centerMode = "single";
+      commit(result.case, "已加入新版本并重新计算。");
+      return true;
+    });
+  }
+
+  function openResolve(issue) {
+    var error = h("div", { class: "form-error" });
+    var reason = h("textarea", { "aria-label": "复核理由" });
+    var checked = false;
+    var label = h("label", { class: "checkline" });
+    label.appendChild(h("input", { type: "checkbox", onchange: function (event) { checked = event.target.checked; } }));
+    label.appendChild(h("span", { text: "我确认这是人工复核记录，没有猜测未知数值，也不是贷款结论。" }));
+    openModal("记录复核结论", [
+      h("p", { text: issue.title }),
+      h("p", { class: "meta", text: "若字段仍为空，关闭事项不会自动填值。之后相关材料一旦变化，结论会重新打开。" }),
+      h("label", { class: "stack", text: "理由" }, reason),
+      label,
+      error
+    ], function () {
+      var result = P.resolveIssue(activeCase(), {
+        key: issue.key,
+        reason: reason.value,
+        acknowledged: checked,
+        actor: actor(),
+        at: nowIso()
+      });
+      if (!result.ok) { error.textContent = result.error; return false; }
+      closeModal();
+      commit(result.case, "已记录复核结论。");
+      return true;
+    });
+  }
+
+  function openReset(all) {
+    openModal(all ? "重置全部案件" : "重置本案", [
+      h("p", { text: all ? "三案都会回到内置样本，本次更正、补充、复核和完成状态都会清掉。" : "本案会回到内置样本。其他案件保持不动。刷新页面也会全部回到起点。" })
+    ], function () {
+      if (all) {
+        ui.model = P.createInitialState();
+        ui.caseId = "case-normal";
+        ui.materialId = "case-normal-application";
+      } else {
+        var fresh = P.resetCase(ui.caseId);
+        var index = ui.model.cases.findIndex(function (item) { return item.id === fresh.id; });
+        ui.model.cases[index] = fresh;
+        ui.materialId = fresh.materials[0].id;
+      }
+      ui.versionId = null;
+      ui.issueKey = null;
+      ui.centerMode = "single";
+      ui.confirmChecked = false;
+      closeModal();
+      render();
+      toast(all ? "三案已恢复初始样本。" : "本案已恢复初始样本。");
+      return true;
+    });
+  }
+
+  function openTests() {
+    var report = P.runEngineTests();
+    var box = h("div", { class: "testout" });
+    box.appendChild(h("div", { text: "通过 " + report.pass + " / " + report.total }));
+    report.failures.forEach(function (item) {
+      box.appendChild(h("div", { text: item.name + " " + item.detail }));
+    });
+    if (!report.failures.length) box.appendChild(h("div", { text: "引擎自测全部通过。" }));
+    openModal("引擎自测", [box], function () { closeModal(); return true; });
+  }
+
+  function openModal(title, body, onOk) {
+    var root = document.getElementById("modal-root");
+    var back = h("div", { class: "modal-back" });
+    var dialog = h("div", { class: "modal", role: "dialog", "aria-modal": "true" });
+    dialog.appendChild(h("h3", { text: title }));
+    body.forEach(function (node) { dialog.appendChild(node); });
+    var actions = h("div", { class: "actions" });
+    actions.appendChild(h("button", { text: "取消", onclick: closeModal }));
+    actions.appendChild(h("button", { class: "primary", text: "确认", onclick: function () { onOk(); } }));
+    dialog.appendChild(actions);
+    back.appendChild(dialog);
+    root.replaceChildren(back);
+    var field = dialog.querySelector("input, textarea");
+    if (field) field.focus();
+  }
+
+  function closeModal() {
+    document.getElementById("modal-root").replaceChildren();
+  }
+
+  function openReport() {
+    var caseObj = activeCase();
+    var text = P.buildReportText(caseObj, { reviewerName: actor(), exportedAt: nowIso() });
+    var pre = h("pre", { class: "report", text: text });
+    var back = h("div", { class: "drawer-back" });
+    var drawer = h("div", { class: "drawer", role: "dialog", "aria-modal": "true" });
+    drawer.appendChild(h("h3", { text: "报告预览 · " + caseObj.applicant }));
+    drawer.appendChild(h("p", { class: "meta", text: caseObj.completedAt ? "本案已完成，文本仍会重复声明它不是贷款结论。" : "这是草稿预览。未决事项还在时也可以导出。" }));
+    drawer.appendChild(pre);
+    var actions = h("div", { class: "actions" });
+    actions.appendChild(h("button", { text: "关闭", onclick: closeDrawer }));
+    actions.appendChild(h("button", { class: "primary", text: "下载这份 TXT", onclick: exportTxt }));
+    drawer.appendChild(actions);
+    back.appendChild(drawer);
+    document.getElementById("drawer-root").replaceChildren(back);
+  }
+
+  function closeDrawer() { document.getElementById("drawer-root").replaceChildren(); }
+
+  function exportTxt() {
+    var stamped = P.recordExport(activeCase(), { kind: "txt", actor: actor(), at: nowIso() });
+    var text = "\uFEFF" + P.buildReportText(stamped, { reviewerName: actor(), exportedAt: nowIso() });
+    download("预审报告-" + filePart(stamped.applicant) + ".txt", text, "text/plain;charset=utf-8");
+    commit(stamped, "已下载 TXT 报告。");
+  }
+
+  function exportJson() {
+    var cases = ui.model.cases.map(function (item) {
+      return item.id === ui.caseId ? P.recordExport(item, { kind: "json", actor: actor(), exportedAt: nowIso(), at: nowIso() }) : item;
+    });
+    var model = { cases: cases };
+    var json = JSON.stringify(P.buildSnapshot(model, { reviewerName: actor(), exportedAt: nowIso(), activeCaseId: ui.caseId }), null, 2);
+    download("预审状态-" + filePart(activeCase().applicant) + ".json", json, "application/json;charset=utf-8");
+    commit(cases.filter(function (item) { return item.id === ui.caseId; })[0], "已下载 JSON 快照。");
+  }
+
+  function onRecheck() {
+    var before = signature(activeCase());
+    var next = P.recheck(activeCase(), nowIso());
+    commit(next, signature(next) === before ? "已重新计算，未决事项没有增减。" : "已重新计算，事项已按当前材料更新。");
+  }
+
+  function signature(caseObj) {
+    return caseObj.issues.map(function (issue) { return issue.key + issue.status + issue.fingerprint; }).sort().join("|");
+  }
+
+  document.getElementById("disclosure-banner").textContent = P.DISCLOSURE;
+  document.getElementById("rule-meta").textContent = "规则 " + P.RULE_VERSION + "\n基准日 " + P.BASELINE_DATE;
+  document.getElementById("page-foot").textContent = "规则为演示口径，未经法律合规核验，也不代表任何银行的材料要求。刷新页面即恢复内置样本，不写入本地存储。";
+  document.getElementById("btn-recheck").addEventListener("click", onRecheck);
+  document.getElementById("btn-supplement").addEventListener("click", function () { openSupplement(null); });
+  document.getElementById("btn-report").addEventListener("click", openReport);
+  document.getElementById("btn-export-txt").addEventListener("click", exportTxt);
+  document.getElementById("btn-export-json").addEventListener("click", exportJson);
+  document.getElementById("btn-reset-case").addEventListener("click", function () { openReset(false); });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") { closeModal(); closeDrawer(); }
+  });
+  render();
+})();
+</script>
+<noscript>需要启用 JavaScript。规则在这一个 HTML 文件里本地运行，不访问网络。</noscript>
+</body>
+</html>
